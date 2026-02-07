@@ -1,3 +1,299 @@
+/* Crypto Market Table */
+.crypto-market-container {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Table Header */
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr 1.5fr 1fr;
+    gap: 15px;
+    padding: 18px 20px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 14px;
+    align-items: center;
+}
+
+.header-item {
+    text-align: left;
+}
+
+.name-col {
+    grid-column: 1;
+}
+
+.price-col {
+    grid-column: 2;
+}
+
+.change-col {
+    grid-column: 3;
+}
+
+.volume-col {
+    grid-column: 4;
+}
+
+.marketcap-col {
+    grid-column: 5;
+}
+
+.action-col {
+    grid-column: 6;
+    text-align: center;
+}
+
+/* Crypto Row */
+.crypto-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr 1.5fr 1fr;
+    gap: 15px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+    align-items: center;
+}
+
+.crypto-row:hover {
+    background: var(--bg-tertiary);
+}
+
+.crypto-row:last-child {
+    border-bottom: none;
+}
+
+/* Name Column */
+.crypto-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.crypto-rank {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+    min-width: 20px;
+}
+
+.crypto-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+.crypto-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.crypto-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.crypto-symbol {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+/* Price Column */
+.price-primary {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.price-secondary {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Change Column */
+.change-value {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.change-value.positive {
+    color: #00d2d3;
+}
+
+.change-value.negative {
+    color: #ff4757;
+}
+
+.change-secondary {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Volume & Market Cap */
+.volume-value,
+.marketcap-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+/* Action Column */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-action {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-trade {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    min-width: 70px;
+}
+
+.btn-trade:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-chart {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    width: 40px;
+    height: 36px;
+}
+
+.btn-chart:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .table-header,
+    .crypto-row {
+        grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr 1fr;
+        gap: 12px;
+    }
+    
+    .marketcap-col {
+        display: none;
+    }
+    
+    .marketcap-value {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .table-header,
+    .crypto-row {
+        grid-template-columns: 2fr 1.5fr 1.2fr 1fr;
+        gap: 10px;
+    }
+    
+    .volume-col {
+        display: none;
+    }
+    
+    .volume-value {
+        display: none;
+    }
+    
+    .btn-trade span {
+        display: none;
+    }
+    
+    .btn-trade {
+        min-width: auto;
+        width: 40px;
+    }
+    
+    .btn-trade::before {
+        content: "↔";
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-header,
+    .crypto-row {
+        grid-template-columns: 2fr 1.5fr 1fr;
+        gap: 8px;
+        padding: 15px;
+    }
+    
+    .change-col {
+        display: none;
+    }
+    
+    .change-value,
+    .change-secondary {
+        display: none;
+    }
+    
+    .crypto-name {
+        font-size: 14px;
+    }
+    
+    .crypto-symbol {
+        font-size: 12px;
+    }
+    
+    .price-primary {
+        font-size: 14px;
+    }
+    
+    .price-secondary {
+        font-size: 12px;
+    }
+}
+
+/* Dark/Light Theme Support */
+[data-theme="light"] .crypto-row:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .crypto-symbol {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .btn-chart {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .btn-chart:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
 .error-notification {
     position: fixed;
     top: 20px;
