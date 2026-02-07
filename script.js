@@ -1,17 +1,24 @@
-const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
-const API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
-
-async fetchFromAPI() {
-    const url = `${PROXY_URL}${API_URL}?start=1&limit=100&convert=${appState.currentCurrency}`;
-    // ...
-}
-// Konfigurasi
+// Konfigurasi untuk Binance API
 const CONFIG = {
-    apiKey: '94f89c989e394f1fbdea036702c7c5ae',
-    updateInterval: 30000, // 30 detik
-    demoMode: false, // Set false untuk API real
-    defaultCurrency: 'IDR'
+    updateInterval: 10000, // 10 detik untuk real-time
+    defaultCurrency: 'IDR',
+    defaultFiat: 'IDR',
+    useWebSocket: true // Gunakan WebSocket untuk real-time
 };
+
+// Data cryptocurrency yang akan di-track
+const CRYPTO_LIST = [
+    { symbol: 'BTC', name: 'Bitcoin', binanceSymbol: 'BTCIDR', cmcId: 1 },
+    { symbol: 'ETH', name: 'Ethereum', binanceSymbol: 'ETHIDR', cmcId: 1027 },
+    { symbol: 'BNB', name: 'Binance Coin', binanceSymbol: 'BNBIDR', cmcId: 1839 },
+    { symbol: 'SOL', name: 'Solana', binanceSymbol: 'SOLIDR', cmcId: 5426 },
+    { symbol: 'XRP', name: 'Ripple', binanceSymbol: 'XRPIDR', cmcId: 52 },
+    { symbol: 'ADA', name: 'Cardano', binanceSymbol: 'ADAIDR', cmcId: 2010 },
+    { symbol: 'DOGE', name: 'Dogecoin', binanceSymbol: 'DOGEIDR', cmcId: 74 },
+    { symbol: 'DOT', name: 'Polkadot', binanceSymbol: 'DOTIDR', cmcId: 6636 },
+    { symbol: 'MATIC', name: 'Polygon', binanceSymbol: 'MATICIDR', cmcId: 3890 },
+    { symbol: 'AVAX', name: 'Avalanche', binanceSymbol: 'AVAXIDR', cmcId: 5805 }
+];
 
 // State aplikasi
 let appState = {
@@ -21,8 +28,10 @@ let appState = {
     itemsPerPage: 20,
     currentCurrency: CONFIG.defaultCurrency,
     theme: 'dark',
-    sortBy: 'market_cap',
-    sortOrder: 'desc'
+    sortBy: 'volume',
+    sortOrder: 'desc',
+    wsConnections: {},
+    chartData: {}
 };
 
 // DOM Elements
@@ -56,109 +65,148 @@ const elements = {
     }
 };
 
-// Demo Data (jika API tidak tersedia)
-const DEMO_DATA = {
-    cryptocurrencies: [
-        {
-            id: 1,
-            name: "Bitcoin",
-            symbol: "BTC",
-            price: 1196700000,
-            change24h: 8.90,
-            marketCap: 23600000000000000,
-            volume24h: 137800000000,
-            supply: 19600000,
-            sparkline: [1100000000, 1120000000, 1150000000, 1170000000, 1160000000, 1180000000, 1196700000]
-        },
-        {
-            id: 1027,
-            name: "Ethereum",
-            symbol: "ETH",
-            price: 68250000,
-            change24h: 5.20,
-            marketCap: 8200000000000000,
-            volume24h: 98700000000,
-            supply: 120000000,
-            sparkline: [65000000, 65500000, 66000000, 67000000, 67500000, 68000000, 68250000]
-        },
-        {
-            id: 1839,
-            name: "Binance Coin",
-            symbol: "BNB",
-            price: 4350000,
-            change24h: 3.45,
-            marketCap: 670000000000000,
-            volume24h: 23400000000,
-            supply: 154000000,
-            sparkline: [4200000, 4250000, 4280000, 4300000, 4320000, 4340000, 4350000]
-        },
-        {
-            id: 52,
-            name: "XRP",
-            symbol: "XRP",
-            price: 8500,
-            change24h: -1.20,
-            marketCap: 456000000000000,
-            volume24h: 34500000000,
-            supply: 54000000000,
-            sparkline: [8600, 8550, 8500, 8450, 8480, 8490, 8500]
-        },
-        {
-            id: 2010,
-            name: "Cardano",
-            symbol: "ADA",
-            price: 6500,
-            change24h: 12.30,
-            marketCap: 230000000000000,
-            volume24h: 12300000000,
-            supply: 35000000000,
-            sparkline: [5800, 5900, 6100, 6300, 6400, 6450, 6500]
-        },
-        {
-            id: 74,
-            name: "Dogecoin",
-            symbol: "DOGE",
-            price: 850,
-            change24h: 25.60,
-            marketCap: 120000000000000,
-            volume24h: 45600000000,
-            supply: 141000000000,
-            sparkline: [680, 720, 750, 780, 800, 830, 850]
-        },
-        {
-            id: 5426,
-            name: "Solana",
-            symbol: "SOL",
-            price: 1250000,
-            change24h: -2.30,
-            marketCap: 530000000000000,
-            volume24h: 89000000000,
-            supply: 425000000,
-            sparkline: [1280000, 1270000, 1265000, 1260000, 1255000, 1252000, 1250000]
-        },
-        {
-            id: 2,
-            name: "Litecoin",
-            symbol: "LTC",
-            price: 875000,
-            change24h: 1.80,
-            marketCap: 64000000000000,
-            volume24h: 5600000000,
-            supply: 73000000,
-            sparkline: [860000, 865000, 868000, 870000, 872000, 874000, 875000]
-        }
-    ],
-    btcDetails: {
-        high24h: 1219000000,
-        low24h: 1084182000,
-        volume: 137800000000,
-        marketCap: 23600000000000000
-    }
-};
+// Demo Data sebagai fallback
+const DEMO_DATA = CRYPTO_LIST.map(crypto => ({
+    id: crypto.cmcId,
+    name: crypto.name,
+    symbol: crypto.symbol,
+    price: this.getRandomPrice(1000000, 1000000000),
+    change24h: (Math.random() * 20 - 10).toFixed(2),
+    marketCap: this.getRandomPrice(1000000000, 1000000000000),
+    volume24h: this.getRandomPrice(10000000, 100000000000),
+    supply: this.getRandomPrice(1000000, 1000000000),
+    sparkline: Array(7).fill().map(() => this.getRandomPrice(1000000, 1000000000))
+}));
 
-// Initialize Application
+// Utility functions
+function getRandomPrice(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function formatIDR(number) {
+    if (number >= 1000000000) {
+        return `Rp ${(number / 1000000000).toFixed(2)}B`;
+    } else if (number >= 1000000) {
+        return `Rp ${(number / 1000000).toFixed(2)}M`;
+    } else if (number >= 1000) {
+        return `Rp ${(number / 1000).toFixed(2)}K`;
+    }
+    return `Rp ${number.toLocaleString('id-ID')}`;
+}
+
+function formatNumber(num) {
+    if (num >= 1000000000000) {
+        return `$${(num / 1000000000000).toFixed(2)}T`;
+    } else if (num >= 1000000000) {
+        return `$${(num / 1000000000).toFixed(2)}B`;
+    } else if (num >= 1000000) {
+        return `$${(num / 1000000).toFixed(2)}M`;
+    } else if (num >= 1000) {
+        return `$${(num / 1000).toFixed(2)}K`;
+    }
+    return `$${num.toLocaleString('id-ID')}`;
+}
+
+// Binance API Class
+class BinanceAPI {
+    constructor() {
+        this.baseURL = 'https://api.binance.com/api/v3';
+        this.wsURL = 'wss://stream.binance.com:9443/ws';
+    }
+
+    // Get 24hr ticker for a symbol
+    async getTicker24hr(symbol) {
+        try {
+            const response = await fetch(`${this.baseURL}/ticker/24hr?symbol=${symbol}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching ${symbol}:`, error);
+            return null;
+        }
+    }
+
+    // Get ticker price
+    async getTickerPrice(symbol) {
+        try {
+            const response = await fetch(`${this.baseURL}/ticker/price?symbol=${symbol}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching price ${symbol}:`, error);
+            return null;
+        }
+    }
+
+    // Get order book
+    async getOrderBook(symbol, limit = 10) {
+        try {
+            const response = await fetch(`${this.baseURL}/depth?symbol=${symbol}&limit=${limit}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching order book ${symbol}:`, error);
+            return null;
+        }
+    }
+
+    // Get klines/candlestick data
+    async getKlines(symbol, interval = '1d', limit = 30) {
+        try {
+            const response = await fetch(`${this.baseURL}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error(`Error fetching klines ${symbol}:`, error);
+            return null;
+        }
+    }
+
+    // Get exchange info
+    async getExchangeInfo() {
+        try {
+            const response = await fetch(`${this.baseURL}/exchangeInfo`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching exchange info:', error);
+            return null;
+        }
+    }
+
+    // WebSocket for real-time updates
+    createWebSocket(symbols, callback) {
+        const streamNames = symbols.map(s => `${s.toLowerCase()}@ticker`).join('/');
+        const ws = new WebSocket(`${this.wsURL}/${streamNames}`);
+        
+        ws.onopen = () => {
+            console.log(`WebSocket connected for ${symbols.join(', ')}`);
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            callback(data);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket disconnected, reconnecting...');
+            setTimeout(() => {
+                this.createWebSocket(symbols, callback);
+            }, 3000);
+        };
+
+        return ws;
+    }
+}
+
+// Main Application Class
 class CryptoMarketApp {
     constructor() {
+        this.binanceAPI = new BinanceAPI();
         this.chart = null;
         this.init();
     }
@@ -173,8 +221,13 @@ class CryptoMarketApp {
         // Initialize chart
         this.initChart();
         
-        // Load data
-        await this.loadData();
+        // Load initial data
+        await this.loadAllData();
+        
+        // Start WebSocket for real-time updates
+        if (CONFIG.useWebSocket) {
+            this.startWebSocket();
+        }
         
         // Hide loading screen
         setTimeout(() => {
@@ -182,7 +235,7 @@ class CryptoMarketApp {
             setTimeout(() => {
                 elements.loadingScreen.style.display = 'none';
             }, 300);
-        }, 1000);
+        }, 1500);
         
         // Start auto-update
         this.startAutoUpdate();
@@ -199,15 +252,9 @@ class CryptoMarketApp {
             this.filterCrypto(e.target.value);
         });
 
-        // Currency select
-        elements.currencySelect.addEventListener('change', (e) => {
-            appState.currentCurrency = e.target.value;
-            this.updatePrices();
-        });
-
         // Refresh button
         elements.refreshData.addEventListener('click', () => {
-            this.loadData();
+            this.loadAllData();
         });
 
         // Filter buttons
@@ -244,167 +291,155 @@ class CryptoMarketApp {
                 num.classList.add('active');
             });
         });
+
+        // Buy/Sell buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-buy')) {
+                const cryptoId = e.target.dataset.id;
+                this.showBuyModal(cryptoId);
+            }
+            if (e.target.classList.contains('btn-sell')) {
+                const cryptoId = e.target.dataset.id;
+                this.showSellModal(cryptoId);
+            }
+            if (e.target.classList.contains('btn-details')) {
+                const cryptoId = e.target.dataset.id;
+                this.showDetailsModal(cryptoId);
+            }
+        });
     }
 
-    async loadData() {
-    try {
-        console.log('Loading crypto data...');
-        
-        if (CONFIG.demoMode) {
-            console.log('Using DEMO mode');
-            // Use demo data
-            appState.cryptoData = DEMO_DATA.cryptocurrencies;
+    async loadAllData() {
+        try {
+            console.log('Loading data from Binance API...');
+            
+            // Load data for all cryptocurrencies
+            const promises = CRYPTO_LIST.map(crypto => this.loadCryptoData(crypto));
+            const results = await Promise.all(promises);
+            
+            // Filter out null results
+            appState.cryptoData = results.filter(r => r !== null);
             appState.filteredData = [...appState.cryptoData];
             
             // Update BTC details
-            this.updateBTCDetails(DEMO_DATA.btcDetails);
-            
-            // Update global stats
-            this.updateGlobalStats();
-        } else {
-            console.log('Fetching from REAL API...');
-            // Fetch from CoinMarketCap API
-            const data = await this.fetchFromAPI();
-            console.log('API Data received:', data);
-            
-            appState.cryptoData = data;
-            appState.filteredData = [...appState.cryptoData];
-            
-            // Update BTC details from API
-            const btcData = data.find(c => c.symbol === 'BTC');
+            const btcData = appState.cryptoData.find(c => c.symbol === 'BTC');
             if (btcData) {
-                this.updateBTCDetails({
-                    high24h: btcData.price * 1.02, // Simulasi high
-                    low24h: btcData.price * 0.98,  // Simulasi low
-                    volume: btcData.volume24h,
-                    marketCap: btcData.marketCap
-                });
+                this.updateBTCDetails(btcData);
             }
             
             // Update global stats
             this.updateGlobalStats();
+            
+            // Render data
+            this.renderTable();
+            this.renderTopGainers();
+            this.renderFeatured();
+            this.updatePrices();
+            
+            // Update timestamp
+            this.updateTimestamp();
+            
+            console.log('Data loaded successfully!', appState.cryptoData);
+            
+        } catch (error) {
+            console.error('Error loading data:', error);
+            this.showError('Gagal memuat data dari Binance. Menggunakan data demo.');
+            this.useDemoData();
         }
-        
-        // Render data
-        this.renderTable();
-        this.renderTopGainers();
-        this.renderFeatured();
-        this.updatePrices();
-        
-        // Update timestamp
-        this.updateTimestamp();
-        
-        console.log('Data loaded successfully!');
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
-        
-        // Show error to user
-        this.showError('Gagal memuat data. Menggunakan data demo.');
-        
-        // Fallback to demo data
-        appState.cryptoData = DEMO_DATA.cryptocurrencies;
-        appState.filteredData = [...appState.cryptoData];
-        this.renderTable();
-        this.renderTopGainers();
-        this.renderFeatured();
-        this.updatePrices();
     }
-}
 
-// Tambahkan fungsi showError
-showError(message) {
-    // Create error notification
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error-notification';
-    errorDiv.innerHTML = `
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>${message}</span>
-        <button class="error-close">&times;</button>
-    `;
-    
-    errorDiv.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #ff4757;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        z-index: 9999;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    `;
-    
-    document.body.appendChild(errorDiv);
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        errorDiv.remove();
-    }, 5000);
-    
-    // Close button
-    errorDiv.querySelector('.error-close').addEventListener('click', () => {
-        errorDiv.remove();
-    });
-}
-
-    async fetchFromAPI() {
-    try {
-        console.log('Fetching data from CoinMarketCap API...');
-        
-        const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=${appState.currentCurrency}`;
-        
-        console.log('API URL:', url);
-        
-        const response = await fetch(url, {
-            headers: {
-                'X-CMC_PRO_API_KEY': CONFIG.apiKey,
-                'Accept': 'application/json'
+    async loadCryptoData(crypto) {
+        try {
+            const tickerData = await this.binanceAPI.getTicker24hr(crypto.binanceSymbol);
+            
+            if (!tickerData) {
+                console.warn(`No data for ${crypto.symbol}`);
+                return null;
             }
-        });
-        
-        console.log('API Response Status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('API Response Data:', data);
-        
-        // Cek jika ada error dari CMC
-        if (data.status.error_code !== 0) {
-            console.error('CMC API Error:', data.status.error_message);
-            throw new Error(data.status.error_message);
-        }
-        
-        // Transform data
-        const transformedData = data.data.map(crypto => {
-            const quote = crypto.quote[appState.currentCurrency];
+            
+            // Get price data
+            const priceData = await this.binanceAPI.getTickerPrice(crypto.binanceSymbol);
+            
+            // Get historical data for sparkline
+            const klines = await this.binanceAPI.getKlines(crypto.binanceSymbol, '1h', 24);
+            const sparkline = klines ? klines.map(k => parseFloat(k[4])) : [];
+            
+            // Calculate market cap (approximation)
+            const supply = this.getEstimatedSupply(crypto.symbol);
+            const marketCap = parseFloat(tickerData.lastPrice) * supply;
+            
             return {
-                id: crypto.id,
+                id: crypto.cmcId,
                 name: crypto.name,
                 symbol: crypto.symbol,
-                price: quote?.price || 0,
-                change24h: quote?.percent_change_24h || 0,
-                marketCap: quote?.market_cap || 0,
-                volume24h: quote?.volume_24h || 0,
-                supply: crypto.circulating_supply || crypto.total_supply || 0,
-                sparkline: []
+                binanceSymbol: crypto.binanceSymbol,
+                price: parseFloat(tickerData.lastPrice),
+                openPrice: parseFloat(tickerData.openPrice),
+                highPrice: parseFloat(tickerData.highPrice),
+                lowPrice: parseFloat(tickerData.lowPrice),
+                change24h: parseFloat(tickerData.priceChangePercent),
+                volume: parseFloat(tickerData.volume),
+                quoteVolume: parseFloat(tickerData.quoteVolume),
+                marketCap: marketCap,
+                supply: supply,
+                sparkline: sparkline,
+                lastUpdate: new Date(tickerData.closeTime)
             };
-        });
-        
-        console.log('Transformed data:', transformedData);
-        return transformedData;
-        
-    } catch (error) {
-        console.error('Error in fetchFromAPI:', error);
-        throw error;
+            
+        } catch (error) {
+            console.error(`Error loading ${crypto.symbol}:`, error);
+            return null;
+        }
     }
-}
+
+    getEstimatedSupply(symbol) {
+        const supplies = {
+            'BTC': 19600000,
+            'ETH': 120000000,
+            'BNB': 154000000,
+            'SOL': 425000000,
+            'XRP': 54000000000,
+            'ADA': 35000000000,
+            'DOGE': 141000000000,
+            'DOT': 1200000000,
+            'MATIC': 10000000000,
+            'AVAX': 400000000
+        };
+        return supplies[symbol] || 100000000;
+    }
+
+    updateBTCDetails(btcData) {
+        if (!btcData) return;
+        
+        elements.cryptoPriceElements.btcHigh.textContent = formatIDR(btcData.highPrice);
+        elements.cryptoPriceElements.btcLow.textContent = formatIDR(btcData.lowPrice);
+        elements.cryptoPriceElements.btcVolume.textContent = `${(btcData.volume / 1000).toFixed(1)}K ${btcData.symbol}`;
+        elements.cryptoPriceElements.btcMarketCap.textContent = formatIDR(btcData.marketCap);
+        
+        // Update chart data
+        this.updateChart(btcData);
+    }
+
+    updateChart(cryptoData) {
+        if (!this.chart) return;
+        
+        // Update chart with new data
+        const labels = cryptoData.sparkline.map((_, i) => `${i}h`);
+        this.chart.data.labels = labels;
+        this.chart.data.datasets[0].data = cryptoData.sparkline;
+        this.chart.update('none');
+    }
+
+    updateGlobalStats() {
+        const totalVolume = appState.cryptoData.reduce((sum, crypto) => sum + crypto.volume, 0);
+        const btc = appState.cryptoData.find(c => c.symbol === 'BTC');
+        const totalMarketCap = appState.cryptoData.reduce((sum, crypto) => sum + crypto.marketCap, 0);
+        const btcDominance = btc ? (btc.marketCap / totalMarketCap * 100).toFixed(1) : '52.8';
+        
+        elements.globalStats.volume.textContent = `Rp ${(totalVolume / 1000000000).toFixed(1)}B`;
+        elements.globalStats.marketCap.textContent = `Rp ${(totalMarketCap / 1000000000000).toFixed(1)}T`;
+        elements.globalStats.dominance.textContent = `${btcDominance}%`;
+    }
 
     renderTable() {
         const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
@@ -414,70 +449,73 @@ showError(message) {
         elements.cryptoTableBody.innerHTML = '';
         
         pageData.forEach((crypto, index) => {
-            const row = document.createElement('tr');
-            const globalIndex = startIndex + index + 1;
-            
-            const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-            const changeSign = crypto.change24h >= 0 ? '+' : '';
-            
-            row.innerHTML = `
-                <td class="sticky-col">${globalIndex}</td>
-                <td class="sticky-col">
-                    <div class="crypto-name-cell">
-                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                             alt="${crypto.name}" class="crypto-icon-small">
-                        <div>
-                            <div>${crypto.name}</div>
-                            <div class="crypto-symbol">${crypto.symbol}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="price-cell">${this.formatPrice(crypto.price)}</td>
-                <td>
-                    <div class="change-cell ${changeClass}">
-                        ${changeSign}${crypto.change24h.toFixed(2)}%
-                    </div>
-                </td>
-                <td>${this.formatNumber(crypto.volume24h)}</td>
-                <td>${this.formatNumber(crypto.marketCap)}</td>
-                <td>
-                    <canvas class="mini-chart" id="chart-${crypto.id}" width="100" height="30"></canvas>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-action btn-buy" data-id="${crypto.id}">Buy</button>
-                        <button class="btn-action btn-sell" data-id="${crypto.id}">Sell</button>
-                        <button class="btn-action btn-details" data-id="${crypto.id}">Details</button>
-                    </div>
-                </td>
-            `;
-            
+            const row = this.createTableRow(crypto, startIndex + index + 1);
             elements.cryptoTableBody.appendChild(row);
             
             // Render mini chart
             this.renderMiniChart(crypto);
         });
         
-        // Update pagination info
         this.updatePaginationInfo();
     }
 
+    createTableRow(crypto, index) {
+        const row = document.createElement('tr');
+        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+        const changeSign = crypto.change24h >= 0 ? '+' : '';
+        
+        row.innerHTML = `
+            <td class="sticky-col">${index}</td>
+            <td class="sticky-col">
+                <div class="crypto-name-cell">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
+                         alt="${crypto.name}" class="crypto-icon-small">
+                    <div>
+                        <div>${crypto.name}</div>
+                        <div class="crypto-symbol">${crypto.symbol}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="price-cell">${formatIDR(crypto.price)}</td>
+            <td>
+                <div class="change-cell ${changeClass}">
+                    ${changeSign}${crypto.change24h.toFixed(2)}%
+                </div>
+            </td>
+            <td>${formatIDR(crypto.volume)}</td>
+            <td>${formatIDR(crypto.marketCap)}</td>
+            <td>
+                <canvas class="mini-chart" id="chart-${crypto.symbol}" width="100" height="30"></canvas>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-action btn-buy" data-id="${crypto.symbol}">Buy</button>
+                    <button class="btn-action btn-sell" data-id="${crypto.symbol}">Sell</button>
+                    <button class="btn-action btn-details" data-id="${crypto.symbol}">Details</button>
+                </div>
+            </td>
+        `;
+        
+        return row;
+    }
+
     renderMiniChart(crypto) {
-        const canvas = document.getElementById(`chart-${crypto.id}`);
-        if (!canvas) return;
+        const canvas = document.getElementById(`chart-${crypto.symbol}`);
+        if (!canvas || !crypto.sparkline || crypto.sparkline.length === 0) return;
         
         const ctx = canvas.getContext('2d');
-        const data = crypto.sparkline || Array(7).fill(crypto.price * 0.9).map((v, i) => v + (crypto.price * 0.1 * Math.random()));
-        
-        const min = Math.min(...data);
-        const max = Math.max(...data);
-        const range = max - min || 1;
-        
+        const data = crypto.sparkline;
         const width = canvas.width;
         const height = canvas.height;
         const step = width / (data.length - 1);
         
+        // Clear canvas
         ctx.clearRect(0, 0, width, height);
+        
+        // Find min and max for scaling
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const range = max - min || 1;
         
         // Draw line
         ctx.beginPath();
@@ -506,27 +544,32 @@ showError(message) {
         elements.topGainers.innerHTML = '';
         
         gainers.forEach(crypto => {
-            const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-            const changeSign = crypto.change24h >= 0 ? '+' : '';
-            
-            const item = document.createElement('div');
-            item.className = 'gainer-item';
-            item.innerHTML = `
-                <div class="gainer-info">
-                    <img src="https://s2.coinmarketcap.com/static/img/coins/32x32/${crypto.id}.png" 
-                         alt="${crypto.name}" width="24" height="24">
-                    <div>
-                        <div>${crypto.symbol}</div>
-                        <div class="gainer-change ${changeClass}">
-                            ${changeSign}${crypto.change24h.toFixed(2)}%
-                        </div>
-                    </div>
-                </div>
-                <div>${this.formatPrice(crypto.price)}</div>
-            `;
-            
+            const item = this.createGainerItem(crypto);
             elements.topGainers.appendChild(item);
         });
+    }
+
+    createGainerItem(crypto) {
+        const item = document.createElement('div');
+        item.className = 'gainer-item';
+        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+        const changeSign = crypto.change24h >= 0 ? '+' : '';
+        
+        item.innerHTML = `
+            <div class="gainer-info">
+                <img src="https://s2.coinmarketcap.com/static/img/coins/32x32/${crypto.id}.png" 
+                     alt="${crypto.name}" width="24" height="24">
+                <div>
+                    <div>${crypto.symbol}</div>
+                    <div class="gainer-change ${changeClass}">
+                        ${changeSign}${crypto.change24h.toFixed(2)}%
+                    </div>
+                </div>
+            </div>
+            <div>${formatIDR(crypto.price)}</div>
+        `;
+        
+        return item;
     }
 
     renderFeatured() {
@@ -535,55 +578,46 @@ showError(message) {
         elements.featuredCrypto.innerHTML = '';
         
         featured.forEach(crypto => {
-            const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-            const changeSign = crypto.change24h >= 0 ? '+' : '';
-            
-            const card = document.createElement('div');
-            card.className = 'featured-card';
-            card.innerHTML = `
-                <div class="featured-card-header">
-                    <div class="featured-card-info">
-                        <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                             alt="${crypto.name}" width="40" height="40">
-                        <div>
-                            <div>${crypto.name}</div>
-                            <div>${crypto.symbol}</div>
-                        </div>
-                    </div>
-                    <div class="featured-change ${changeClass}">
-                        ${changeSign}${crypto.change24h.toFixed(2)}%
-                    </div>
-                </div>
-                <div class="featured-price">${this.formatPrice(crypto.price)}</div>
-                <div class="featured-stats">
-                    <div>Market Cap</div>
-                    <div>${this.formatNumber(crypto.marketCap)}</div>
-                </div>
-            `;
-            
+            const card = this.createFeaturedCard(crypto);
             elements.featuredCrypto.appendChild(card);
         });
     }
 
-    updatePrices() {
-        // Format semua harga berdasarkan currency
-        const formatPrice = (price) => {
-            if (appState.currentCurrency === 'IDR') {
-                return `Rp ${Math.round(price).toLocaleString('id-ID')}`;
-            } else {
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: appState.currentCurrency,
-                    minimumFractionDigits: 2
-                }).format(price);
-            }
-        };
+    createFeaturedCard(crypto) {
+        const card = document.createElement('div');
+        card.className = 'featured-card';
+        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+        const changeSign = crypto.change24h >= 0 ? '+' : '';
+        
+        card.innerHTML = `
+            <div class="featured-card-header">
+                <div class="featured-card-info">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
+                         alt="${crypto.name}" width="40" height="40">
+                    <div>
+                        <div>${crypto.name}</div>
+                        <div>${crypto.symbol}</div>
+                    </div>
+                </div>
+                <div class="featured-change ${changeClass}">
+                    ${changeSign}${crypto.change24h.toFixed(2)}%
+                </div>
+            </div>
+            <div class="featured-price">${formatIDR(crypto.price)}</div>
+            <div class="featured-stats">
+                <div>Volume 24j</div>
+                <div>${formatIDR(crypto.volume)}</div>
+            </div>
+        `;
+        
+        return card;
+    }
 
-        // Update BTC elements
+    updatePrices() {
         const btc = appState.cryptoData.find(c => c.symbol === 'BTC');
         if (btc) {
-            elements.cryptoPriceElements.btcPrice.textContent = formatPrice(btc.price);
-            elements.cryptoPriceElements.btcPriceWidget.textContent = formatPrice(btc.price);
+            elements.cryptoPriceElements.btcPrice.textContent = formatIDR(btc.price);
+            elements.cryptoPriceElements.btcPriceWidget.textContent = formatIDR(btc.price);
             
             const changeText = `${btc.change24h >= 0 ? '+' : ''}${btc.change24h.toFixed(2)}%`;
             elements.cryptoPriceElements.btcChange.textContent = changeText;
@@ -594,27 +628,6 @@ showError(message) {
             elements.cryptoPriceElements.btcChange.className = `chart-change ${changeClass}`;
             elements.cryptoPriceElements.btcChangeWidget.className = `price-change-large ${changeClass}`;
         }
-    }
-
-    updateBTCDetails(details) {
-        elements.cryptoPriceElements.btcHigh.textContent = `Rp ${Math.round(details.high24h).toLocaleString('id-ID')}`;
-        elements.cryptoPriceElements.btcLow.textContent = `Rp ${Math.round(details.low24h).toLocaleString('id-ID')}`;
-        elements.cryptoPriceElements.btcVolume.textContent = `${(details.volume / 1000000000).toFixed(1)}B IDR`;
-        elements.cryptoPriceElements.btcMarketCap.textContent = `Rp ${(details.marketCap / 1000000000000).toFixed(1)}T`;
-    }
-
-    updateGlobalStats() {
-        // Hitung total market cap dan volume
-        const totalMarketCap = appState.cryptoData.reduce((sum, crypto) => sum + crypto.marketCap, 0);
-        const totalVolume = appState.cryptoData.reduce((sum, crypto) => sum + crypto.volume24h, 0);
-        
-        // BTC dominance
-        const btc = appState.cryptoData.find(c => c.symbol === 'BTC');
-        const btcDominance = btc ? (btc.marketCap / totalMarketCap * 100).toFixed(1) : '52.8';
-        
-        elements.globalStats.marketCap.textContent = `$${(totalMarketCap / 1000000000000).toFixed(1)}T`;
-        elements.globalStats.volume.textContent = `$${(totalVolume / 1000000000).toFixed(1)}B`;
-        elements.globalStats.dominance.textContent = `${btcDominance}%`;
     }
 
     updateTimestamp() {
@@ -630,13 +643,79 @@ showError(message) {
         document.getElementById('footerUpdateTime').textContent = timeString;
     }
 
-    updatePaginationInfo() {
-        const startItem = (appState.currentPage - 1) * appState.itemsPerPage + 1;
-        const endItem = Math.min(appState.currentPage * appState.itemsPerPage, appState.filteredData.length);
+    startWebSocket() {
+        // Get symbols for WebSocket
+        const symbols = CRYPTO_LIST.map(c => c.binanceSymbol.toLowerCase());
         
-        document.getElementById('startItem').textContent = startItem;
-        document.getElementById('endItem').textContent = endItem;
-        document.getElementById('totalItems').textContent = appState.filteredData.length;
+        // Create WebSocket connection
+        const ws = this.binanceAPI.createWebSocket(symbols, (data) => {
+            this.handleWebSocketMessage(data);
+        });
+        
+        appState.wsConnections.main = ws;
+    }
+
+    handleWebSocketMessage(data) {
+        // Update specific cryptocurrency data
+        const symbol = data.s.toUpperCase(); // Symbol from Binance
+        const crypto = appState.cryptoData.find(c => c.binanceSymbol === symbol);
+        
+        if (crypto) {
+            // Update crypto data
+            crypto.price = parseFloat(data.c); // Current price
+            crypto.change24h = parseFloat(data.P); // Price change percent
+            crypto.highPrice = parseFloat(data.h); // High price
+            crypto.lowPrice = parseFloat(data.l); // Low price
+            crypto.volume = parseFloat(data.v); // Volume
+            
+            // Update UI if this crypto is currently displayed
+            this.updateCryptoUI(crypto);
+            
+            // If it's BTC, update main widgets
+            if (crypto.symbol === 'BTC') {
+                this.updatePrices();
+                this.updateBTCDetails(crypto);
+            }
+            
+            // Update timestamp
+            this.updateTimestamp();
+        }
+    }
+
+    updateCryptoUI(crypto) {
+        // Find and update table row
+        const rows = document.querySelectorAll('#cryptoTableBody tr');
+        rows.forEach(row => {
+            const symbolCell = row.querySelector('.crypto-symbol');
+            if (symbolCell && symbolCell.textContent === crypto.symbol) {
+                // Update price cell
+                const priceCell = row.querySelector('.price-cell');
+                if (priceCell) {
+                    priceCell.textContent = formatIDR(crypto.price);
+                }
+                
+                // Update change cell
+                const changeCell = row.querySelector('.change-cell');
+                if (changeCell) {
+                    const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+                    const changeSign = crypto.change24h >= 0 ? '+' : '';
+                    changeCell.className = `change-cell ${changeClass}`;
+                    changeCell.textContent = `${changeSign}${crypto.change24h.toFixed(2)}%`;
+                }
+                
+                // Update volume cell
+                const volumeCell = row.querySelector('td:nth-child(5)');
+                if (volumeCell) {
+                    volumeCell.textContent = formatIDR(crypto.volume);
+                }
+            }
+        });
+        
+        // Update top gainers if affected
+        this.renderTopGainers();
+        
+        // Update featured if affected
+        this.renderFeatured();
     }
 
     filterCrypto(searchTerm) {
@@ -663,7 +742,7 @@ showError(message) {
                 appState.filteredData = [...appState.cryptoData].sort((a, b) => a.change24h - b.change24h);
                 break;
             case 'volume':
-                appState.filteredData = [...appState.cryptoData].sort((a, b) => b.volume24h - a.volume24h);
+                appState.filteredData = [...appState.cryptoData].sort((a, b) => b.volume - a.volume);
                 break;
             default:
                 appState.filteredData = [...appState.cryptoData];
@@ -676,48 +755,39 @@ showError(message) {
     initChart() {
         const ctx = elements.btcChart.getContext('2d');
         
-        // Data demo untuk chart
-        const data = {
-            labels: ['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'],
-            datasets: [{
-                label: 'BTC Price',
-                data: [1100000000, 1150000000, 1050000000, 950000000, 850000000, 700000000, 500000000],
-                borderColor: '#2962ff',
-                backgroundColor: 'rgba(41, 98, 255, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        };
-        
         this.chart = new Chart(ctx, {
             type: 'line',
-            data: data,
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Price',
+                    data: [],
+                    borderColor: '#2962ff',
+                    backgroundColor: 'rgba(41, 98, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
                         callbacks: {
                             label: (context) => {
-                                return `Rp ${context.raw.toLocaleString('id-ID')}`;
+                                return formatIDR(context.raw);
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        grid: {
-                            color: 'rgba(255,255,255,0.1)'
-                        },
-                        ticks: {
-                            color: 'rgba(255,255,255,0.7)'
-                        }
+                        display: false,
+                        grid: { display: false }
                     },
                     y: {
                         grid: {
@@ -726,7 +796,9 @@ showError(message) {
                         ticks: {
                             color: 'rgba(255,255,255,0.7)',
                             callback: (value) => {
-                                return `Rp ${(value / 1000000).toFixed(0)}M`;
+                                if (value >= 1000000000) return `Rp ${(value/1000000000).toFixed(1)}B`;
+                                if (value >= 1000000) return `Rp ${(value/1000000).toFixed(1)}M`;
+                                return `Rp ${value}`;
                             }
                         }
                     }
@@ -739,30 +811,13 @@ showError(message) {
         });
     }
 
-    formatPrice(price) {
-        if (appState.currentCurrency === 'IDR') {
-            return `Rp ${Math.round(price).toLocaleString('id-ID')}`;
-        } else {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: appState.currentCurrency,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 8
-            }).format(price);
-        }
-    }
-
-    formatNumber(num) {
-        if (num >= 1000000000000) {
-            return `$${(num / 1000000000000).toFixed(2)}T`;
-        } else if (num >= 1000000000) {
-            return `$${(num / 1000000000).toFixed(2)}B`;
-        } else if (num >= 1000000) {
-            return `$${(num / 1000000).toFixed(2)}M`;
-        } else if (num >= 1000) {
-            return `$${(num / 1000).toFixed(2)}K`;
-        }
-        return `$${num.toFixed(2)}`;
+    updatePaginationInfo() {
+        const startItem = (appState.currentPage - 1) * appState.itemsPerPage + 1;
+        const endItem = Math.min(appState.currentPage * appState.itemsPerPage, appState.filteredData.length);
+        
+        document.getElementById('startItem').textContent = startItem;
+        document.getElementById('endItem').textContent = endItem;
+        document.getElementById('totalItems').textContent = appState.filteredData.length;
     }
 
     setTheme(theme) {
@@ -770,7 +825,6 @@ showError(message) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         
-        // Update theme toggle icon
         const icon = elements.themeToggle.querySelector('i');
         icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
     }
@@ -781,26 +835,138 @@ showError(message) {
     }
 
     startAutoUpdate() {
+        // Update data periodically (fallback if WebSocket fails)
         setInterval(() => {
-            this.loadData();
-        }, CONFIG.updateInterval);
+            if (!CONFIG.useWebSocket) {
+                this.loadAllData();
+            }
+        }, CONFIG.updateInterval * 3); // Every 30 seconds
+    }
+
+    useDemoData() {
+        appState.cryptoData = DEMO_DATA;
+        appState.filteredData = [...DEMO_DATA];
+        this.renderTable();
+        this.renderTopGainers();
+        this.renderFeatured();
+        this.updatePrices();
+    }
+
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-notification';
+        errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>${message}</span>
+            <button class="error-close">&times;</button>
+        `;
+        
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ff4757, #ff6b6b);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            box-shadow: 0 10px 25px rgba(255, 71, 87, 0.3);
+            border-left: 5px solid #ff3838;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+        
+        errorDiv.querySelector('.error-close').addEventListener('click', () => {
+            errorDiv.remove();
+        });
+    }
+
+    showBuyModal(symbol) {
+        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
+        if (!crypto) return;
+        
+        alert(`Buy ${crypto.name} (${crypto.symbol}) at ${formatIDR(crypto.price)}`);
+        // Implement modal for buying
+    }
+
+    showSellModal(symbol) {
+        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
+        if (!crypto) return;
+        
+        alert(`Sell ${crypto.name} (${crypto.symbol}) at ${formatIDR(crypto.price)}`);
+        // Implement modal for selling
+    }
+
+    showDetailsModal(symbol) {
+        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
+        if (!crypto) return;
+        
+        const modal = document.getElementById('tradingModal');
+        const modalBody = modal.querySelector('.modal-body');
+        
+        modalBody.innerHTML = `
+            <div class="crypto-detail">
+                <div class="detail-header">
+                    <img src="https://s2.coinmarketcap.com/static/img/coins/128x128/${crypto.id}.png" 
+                         alt="${crypto.name}" width="64" height="64">
+                    <div>
+                        <h3>${crypto.name} (${crypto.symbol})</h3>
+                        <div class="detail-price">${formatIDR(crypto.price)}</div>
+                        <div class="detail-change ${crypto.change24h >= 0 ? 'positive' : 'negative'}">
+                            ${crypto.change24h >= 0 ? '+' : ''}${crypto.change24h.toFixed(2)}% (24h)
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-stats">
+                    <div class="stat-row">
+                        <span>High 24h:</span>
+                        <span>${formatIDR(crypto.highPrice)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Low 24h:</span>
+                        <span>${formatIDR(crypto.lowPrice)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Volume 24h:</span>
+                        <span>${formatIDR(crypto.volume)}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>Market Cap:</span>
+                        <span>${formatIDR(crypto.marketCap)}</span>
+                    </div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-action btn-buy" style="width: 100%; margin-bottom: 10px;">Buy ${crypto.symbol}</button>
+                    <button class="btn-action btn-sell" style="width: 100%;">Sell ${crypto.symbol}</button>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        
+        // Close modal
+        document.getElementById('closeModal').onclick = () => {
+            modal.classList.remove('active');
+        };
     }
 }
 
-// Initialize app ketika DOM siap
+// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.cryptoApp = new CryptoMarketApp();
 });
 
-// Tambahkan beberapa fungsi utilitas global
-window.formatIDR = (number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(number);
-};
-
+// Global utility functions
+window.formatIDR = formatIDR;
 window.formatChange = (change) => {
     const sign = change >= 0 ? '+' : '';
     const colorClass = change >= 0 ? 'positive' : 'negative';
