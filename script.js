@@ -1,288 +1,7 @@
-// Crypto Data Array
-const cryptoData = [
-    {
-        rank: 1,
-        id: 'bitcoin',
-        symbol: 'BTC',
-        name: 'Bitcoin',
-        price_usd: 68607.18,
-        price_idr: 1156060484.09,
-        change_24h: 5.65,
-        change_usd: 3671.45,
-        volume_24h: 1486550000000000, // 1.48655T
-        market_cap: 1370000000000, // 1.37T
-        icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png'
-    },
-    {
-        rank: 2,
-        id: 'ethereum',
-        symbol: 'ETH',
-        name: 'Ethereum',
-        price_usd: 2039.17,
-        price_idr: 34360891.34,
-        change_24h: 10.64,
-        change_usd: 196.22,
-        volume_24h: 159370000000000, // 159.37T
-        market_cap: 245000000000000, // 245B
-        icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png'
-    },
-    {
-        rank: 3,
-        id: 'tether',
-        symbol: 'USDT',
-        name: 'TetherUS',
-        price_usd: 1.00,
-        price_idr: 16850.43,
-        change_24h: -0.07,
-        change_usd: -0.0007,
-        volume_24h: 450220000000000, // 450.22T
-        market_cap: 98000000000, // 98B
-        icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png'
-    },
-    {
-        rank: 4,
-        id: 'binance-coin',
-        symbol: 'BNB',
-        name: 'BNB',
-        price_usd: 642.33,
-        price_idr: 10823536.70,
-        change_24h: 8.42,
-        change_usd: 49.88,
-        volume_24h: 134610000000000, // 134.61T
-        market_cap: 98700000000, // 98.7B
-        icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png'
-    },
-    {
-        rank: 5,
-        id: 'solana',
-        symbol: 'SOL',
-        name: 'Solana',
-        price_usd: 86.03,
-        price_idr: 1449642.49,
-        change_24h: 7.17,
-        change_usd: 5.75,
-        volume_24h: 881400000000000, // 881.40T
-        market_cap: 37600000000, // 37.6B
-        icon: 'https://cryptologos.cc/logos/solana-sol-logo.png'
-    }
-];
+// ==============================================
+// KONFIGURASI DAN DATA
+// ==============================================
 
-// Format Number Functions
-function formatUSD(number) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(number);
-}
-
-function formatIDR(number) {
-    if (number >= 1000000000000) {
-        return `Rp ${(number / 1000000000000).toFixed(2)}T`;
-    } else if (number >= 1000000000) {
-        return `Rp ${(number / 1000000000).toFixed(2)}B`;
-    } else if (number >= 1000000) {
-        return `Rp ${(number / 1000000).toFixed(2)}M`;
-    }
-    return `Rp ${number.toLocaleString('id-ID')}`;
-}
-
-function formatChange(change) {
-    const sign = change >= 0 ? '+' : '';
-    return {
-        value: `${sign}${change.toFixed(2)}%`,
-        class: change >= 0 ? 'positive' : 'negative'
-    };
-}
-
-// Render Crypto Table
-class CryptoMarketTable {
-    constructor(containerId) {
-        this.container = document.getElementById(containerId);
-        this.data = cryptoData;
-        this.init();
-    }
-
-    init() {
-        this.render();
-        this.setupEventListeners();
-    }
-
-    render() {
-        const tableHTML = `
-            <div class="crypto-market-container">
-                ${this.renderHeader()}
-                ${this.renderRows()}
-            </div>
-        `;
-        
-        this.container.innerHTML = tableHTML;
-    }
-
-    renderHeader() {
-        return `
-            <div class="table-header">
-                <div class="header-item name-col"># Nama</div>
-                <div class="header-item price-col">Harga</div>
-                <div class="header-item change-col">Perubahan</div>
-                <div class="header-item volume-col">Volume 24jam</div>
-                <div class="header-item marketcap-col">Kap Pasar</div>
-                <div class="header-item action-col">Tindakan</div>
-            </div>
-        `;
-    }
-
-    renderRows() {
-        return this.data.map(crypto => this.renderRow(crypto)).join('');
-    }
-
-    renderRow(crypto) {
-        const change = formatChange(crypto.change_24h);
-        
-        return `
-            <div class="crypto-row" data-id="${crypto.id}">
-                <div class="row-item name-col">
-                    <div class="crypto-info">
-                        <span class="crypto-rank">${crypto.rank}</span>
-                        <img src="${crypto.icon}" alt="${crypto.name}" class="crypto-icon" onerror="this.src='https://cryptologos.cc/logos/generic-crypto-logo.png'">
-                        <div class="crypto-details">
-                            <div class="crypto-name">${crypto.symbol} ${crypto.name}</div>
-                            <div class="crypto-symbol">${crypto.symbol}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row-item price-col">
-                    <div class="price-primary">${formatUSD(crypto.price_usd)}</div>
-                    <div class="price-secondary">${formatIDR(crypto.price_idr)}</div>
-                </div>
-                
-                <div class="row-item change-col">
-                    <div class="change-value ${change.class}">${change.value}</div>
-                    <div class="change-secondary">${crypto.change_usd >= 0 ? '+' : ''}${formatUSD(crypto.change_usd)}</div>
-                </div>
-                
-                <div class="row-item volume-col">
-                    <div class="volume-value">${formatIDR(crypto.volume_24h)}</div>
-                </div>
-                
-                <div class="row-item marketcap-col">
-                    <div class="marketcap-value">${formatIDR(crypto.market_cap)}</div>
-                </div>
-                
-                <div class="row-item action-col">
-                    <div class="action-buttons">
-                        <button class="btn-action btn-trade" data-symbol="${crypto.symbol}">
-                            <span>Trade</span>
-                        </button>
-                        <button class="btn-action btn-chart" data-symbol="${crypto.symbol}">
-                            <i class="fas fa-chart-line"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    setupEventListeners() {
-        // Delegate events to container
-        this.container.addEventListener('click', (e) => {
-            const tradeBtn = e.target.closest('.btn-trade');
-            const chartBtn = e.target.closest('.btn-chart');
-            const cryptoRow = e.target.closest('.crypto-row');
-            
-            if (tradeBtn) {
-                this.handleTradeClick(tradeBtn.dataset.symbol);
-            }
-            
-            if (chartBtn) {
-                this.handleChartClick(chartBtn.dataset.symbol);
-            }
-            
-            if (cryptoRow && !tradeBtn && !chartBtn) {
-                this.handleRowClick(cryptoRow.dataset.id);
-            }
-        });
-    }
-
-    handleTradeClick(symbol) {
-        console.log(`Trade ${symbol}`);
-        // Implement trade logic
-        alert(`Trading ${symbol} - Fitur akan segera hadir!`);
-    }
-
-    handleChartClick(symbol) {
-        console.log(`Show chart for ${symbol}`);
-        // Implement chart view
-        window.location.hash = `#chart/${symbol.toLowerCase()}`;
-    }
-
-    handleRowClick(cryptoId) {
-        console.log(`View details for ${cryptoId}`);
-        // Navigate to crypto detail page
-        window.location.href = `/crypto/${cryptoId}`;
-    }
-
-    // Update data dynamically
-    updateData(newData) {
-        this.data = newData;
-        this.render();
-    }
-
-    // Sort by column
-    sortBy(column, order = 'desc') {
-        const sortedData = [...this.data].sort((a, b) => {
-            let valueA, valueB;
-            
-            switch(column) {
-                case 'rank':
-                    valueA = a.rank;
-                    valueB = b.rank;
-                    break;
-                case 'price':
-                    valueA = a.price_usd;
-                    valueB = b.price_usd;
-                    break;
-                case 'change':
-                    valueA = a.change_24h;
-                    valueB = b.change_24h;
-                    break;
-                case 'volume':
-                    valueA = a.volume_24h;
-                    valueB = b.volume_24h;
-                    break;
-                case 'marketcap':
-                    valueA = a.market_cap;
-                    valueB = b.market_cap;
-                    break;
-                default:
-                    valueA = a.rank;
-                    valueB = b.rank;
-            }
-            
-            return order === 'desc' ? valueB - valueA : valueA - valueB;
-        });
-        
-        this.updateData(sortedData);
-    }
-
-    // Filter by search term
-    filterBySearch(term) {
-        const filtered = cryptoData.filter(crypto => 
-            crypto.name.toLowerCase().includes(term.toLowerCase()) ||
-            crypto.symbol.toLowerCase().includes(term.toLowerCase())
-        );
-        
-        this.updateData(filtered);
-    }
-}
-
-// Initialize table
-document.addEventListener('DOMContentLoaded', () => {
-    const cryptoTable = new CryptoMarketTable('cryptoMarketTable');
-    window.cryptoTable = cryptoTable;
-});
 // Konfigurasi untuk Binance API
 const CONFIG = {
     updateInterval: 10000, // 10 detik untuk real-time
@@ -302,17 +21,7 @@ const CRYPTO_LIST = [
     { symbol: 'DOGE', name: 'Dogecoin', binanceSymbol: 'DOGEIDR', cmcId: 74 },
     { symbol: 'DOT', name: 'Polkadot', binanceSymbol: 'DOTIDR', cmcId: 6636 },
     { symbol: 'MATIC', name: 'Polygon', binanceSymbol: 'MATICIDR', cmcId: 3890 },
-    { symbol: 'AVAX', name: 'Avalanche', binanceSymbol: 'AVAXIDR', cmcId: 5805 },
-    { symbol: 'LTC', name: 'Litecoin', binanceSymbol: 'LTCIDR', cmcId: 2 },
-    { symbol: 'LINK', name: 'Chainlink', binanceSymbol: 'LINKIDR', cmcId: 1975 },
-    { symbol: 'UNI', name: 'Uniswap', binanceSymbol: 'UNIIDR', cmcId: 7083 },
-    { symbol: 'SHIB', name: 'Shiba Inu', binanceSymbol: 'SHIBIDR', cmcId: 5994 },
-    { symbol: 'TRX', name: 'TRON', binanceSymbol: 'TRXIDR', cmcId: 1958 },
-    { symbol: 'ATOM', name: 'Cosmos', binanceSymbol: 'ATOMIDR', cmcId: 3794 },
-    { symbol: 'NEAR', name: 'NEAR Protocol', binanceSymbol: 'NEARIDR', cmcId: 6535 },
-    { symbol: 'ALGO', name: 'Algorand', binanceSymbol: 'ALGOIDR', cmcId: 4030 },
-    { symbol: 'VET', name: 'VeChain', binanceSymbol: 'VETIDR', cmcId: 3077 },
-    { symbol: 'AXS', name: 'Axie Infinity', binanceSymbol: 'AXSIDR', cmcId: 6783 }
+    { symbol: 'AVAX', name: 'Avalanche', binanceSymbol: 'AVAXIDR', cmcId: 5805 }
 ];
 
 // State aplikasi
@@ -329,53 +38,134 @@ let appState = {
     chartData: {}
 };
 
-// DOM Elements
-const elements = {
-    loadingScreen: document.getElementById('loadingScreen'),
-    cryptoTableBody: document.getElementById('cryptoTableBody'),
-    topGainers: document.getElementById('topGainers'),
-    featuredCrypto: document.getElementById('featuredCrypto'),
-    searchCrypto: document.getElementById('searchCrypto'),
-    currencySelect: document.getElementById('currencySelect'),
-    refreshData: document.getElementById('refreshData'),
-    lastUpdated: document.getElementById('lastUpdated'),
-    themeToggle: document.getElementById('themeToggle'),
-    btcChart: document.getElementById('btcChart'),
-    cryptoPriceElements: {
-        btcPrice: document.getElementById('btcPrice'),
-        btcChange: document.getElementById('btcChange'),
-        btcPriceWidget: document.getElementById('btcPriceWidget'),
-        btcChangeWidget: document.getElementById('btcChangeWidget'),
-        btcHigh: document.getElementById('btcHigh'),
-        btcLow: document.getElementById('btcLow'),
-        btcVolume: document.getElementById('btcVolume'),
-        btcMarketCap: document.getElementById('btcMarketCap'),
-        btcUpdateTime: document.getElementById('btcUpdateTime')
+// Demo Data sebagai fallback
+const DEMO_DATA = [
+    {
+        rank: 1,
+        id: 'bitcoin',
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        binanceSymbol: 'BTCIDR',
+        price: 1156060484.09,
+        openPrice: 1100000000,
+        highPrice: 1219000000,
+        lowPrice: 1084182000,
+        change24h: 5.65,
+        volume: 1486550000000000,
+        quoteVolume: 1486550000000000,
+        marketCap: 1370000000000000000,
+        supply: 19600000,
+        sparkline: Array(24).fill().map((_, i) => 1156060484.09 * (0.95 + Math.random() * 0.1)),
+        lastUpdate: new Date()
     },
-    globalStats: {
-        marketCap: document.getElementById('globalMarketCap'),
-        volume: document.getElementById('globalVolume'),
-        dominance: document.getElementById('btcDominance'),
-        fearGreed: document.getElementById('fearGreedIndex')
+    {
+        rank: 2,
+        id: 'ethereum',
+        symbol: 'ETH',
+        name: 'Ethereum',
+        binanceSymbol: 'ETHIDR',
+        price: 34360891.34,
+        openPrice: 31000000,
+        highPrice: 35000000,
+        lowPrice: 30000000,
+        change24h: 10.64,
+        volume: 159370000000000,
+        quoteVolume: 159370000000000,
+        marketCap: 245000000000000,
+        supply: 120000000,
+        sparkline: Array(24).fill().map((_, i) => 34360891.34 * (0.95 + Math.random() * 0.1)),
+        lastUpdate: new Date()
+    },
+    {
+        rank: 3,
+        id: 'tether',
+        symbol: 'USDT',
+        name: 'TetherUS',
+        binanceSymbol: 'USDTIDR',
+        price: 16850.43,
+        openPrice: 16850.00,
+        highPrice: 16860.00,
+        lowPrice: 16840.00,
+        change24h: -0.07,
+        volume: 450220000000000,
+        quoteVolume: 450220000000000,
+        marketCap: 98000000000,
+        supply: 98000000000,
+        sparkline: Array(24).fill().map((_, i) => 16850.43 * (0.999 + Math.random() * 0.002)),
+        lastUpdate: new Date()
+    },
+    {
+        rank: 4,
+        id: 'binance-coin',
+        symbol: 'BNB',
+        name: 'BNB',
+        binanceSymbol: 'BNBIDR',
+        price: 10823536.70,
+        openPrice: 10000000,
+        highPrice: 11000000,
+        lowPrice: 9800000,
+        change24h: 8.42,
+        volume: 134610000000000,
+        quoteVolume: 134610000000000,
+        marketCap: 98700000000,
+        supply: 154000000,
+        sparkline: Array(24).fill().map((_, i) => 10823536.70 * (0.95 + Math.random() * 0.1)),
+        lastUpdate: new Date()
+    },
+    {
+        rank: 5,
+        id: 'solana',
+        symbol: 'SOL',
+        name: 'Solana',
+        binanceSymbol: 'SOLIDR',
+        price: 1449642.49,
+        openPrice: 1350000,
+        highPrice: 1500000,
+        lowPrice: 1300000,
+        change24h: 7.17,
+        volume: 881400000000000,
+        quoteVolume: 881400000000000,
+        marketCap: 37600000000,
+        supply: 425000000,
+        sparkline: Array(24).fill().map((_, i) => 1449642.49 * (0.95 + Math.random() * 0.1)),
+        lastUpdate: new Date()
     }
-};
+];
 
-// Utility functions
+// ==============================================
+// UTILITY FUNCTIONS
+// ==============================================
+
 function formatIDR(number) {
-    // Format lengkap tanpa singkatan B/M/K
+    // Format lengkap tanpa singkatan B/M/K/T
     return `Rp ${Math.round(number).toLocaleString('id-ID')}`;
 }
 
-function formatNumber(num) {
-    // Untuk USD, juga tanpa singkatan
-    return `$${Math.round(num).toLocaleString('id-ID')}`;
+function formatUSD(number) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(number);
 }
 
 function getRandomPrice(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Binance API Class
+function formatChange(change) {
+    const sign = change >= 0 ? '+' : '';
+    return {
+        value: `${sign}${change.toFixed(2)}%`,
+        class: change >= 0 ? 'positive' : 'negative'
+    };
+}
+
+// ==============================================
+// BINANCE API CLASS
+// ==============================================
+
 class BinanceAPI {
     constructor() {
         this.baseURL = 'https://api.binance.com/api/v3';
@@ -394,30 +184,6 @@ class BinanceAPI {
         }
     }
 
-    // Get ticker price
-    async getTickerPrice(symbol) {
-        try {
-            const response = await fetch(`${this.baseURL}/ticker/price?symbol=${symbol}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error(`Error fetching price ${symbol}:`, error);
-            return null;
-        }
-    }
-
-    // Get order book
-    async getOrderBook(symbol, limit = 10) {
-        try {
-            const response = await fetch(`${this.baseURL}/depth?symbol=${symbol}&limit=${limit}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error(`Error fetching order book ${symbol}:`, error);
-            return null;
-        }
-    }
-
     // Get klines/candlestick data
     async getKlines(symbol, interval = '1h', limit = 24) {
         try {
@@ -426,18 +192,6 @@ class BinanceAPI {
             return await response.json();
         } catch (error) {
             console.error(`Error fetching klines ${symbol}:`, error);
-            return null;
-        }
-    }
-
-    // Get exchange info
-    async getExchangeInfo() {
-        try {
-            const response = await fetch(`${this.baseURL}/exchangeInfo`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching exchange info:', error);
             return null;
         }
     }
@@ -471,10 +225,194 @@ class BinanceAPI {
     }
 }
 
-// Main Application Class
+// ==============================================
+// CRYPTO MARKET TABLE CLASS (UNTUK DESAIN BARU)
+// ==============================================
+
+class CryptoMarketTable {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.data = [];
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+    }
+
+    render(data) {
+        this.data = data;
+        const tableHTML = `
+            <div class="crypto-market-container">
+                ${this.renderHeader()}
+                ${this.renderRows()}
+            </div>
+        `;
+        
+        if (this.container) {
+            this.container.innerHTML = tableHTML;
+        }
+    }
+
+    renderHeader() {
+        return `
+            <div class="table-header">
+                <div class="header-item name-col"># Nama</div>
+                <div class="header-item price-col">Harga</div>
+                <div class="header-item change-col">Perubahan</div>
+                <div class="header-item volume-col">Volume 24jam</div>
+                <div class="header-item marketcap-col">Kap Pasar</div>
+                <div class="header-item action-col">Tindakan</div>
+            </div>
+        `;
+    }
+
+    renderRows() {
+        return this.data.map(crypto => this.renderRow(crypto)).join('');
+    }
+
+    renderRow(crypto) {
+        const change = formatChange(crypto.change24h);
+        const priceUSD = crypto.price * 0.000064; // Approx conversion rate
+        
+        return `
+            <div class="crypto-row" data-id="${crypto.id}">
+                <div class="row-item name-col">
+                    <div class="crypto-info">
+                        <span class="crypto-rank">${crypto.rank}</span>
+                        <img src="https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png" 
+                             alt="${crypto.name}" class="crypto-icon" 
+                             onerror="this.src='https://cryptologos.cc/logos/generic-crypto-logo.png'">
+                        <div class="crypto-details">
+                            <div class="crypto-name">${crypto.symbol} ${crypto.name}</div>
+                            <div class="crypto-symbol">${crypto.symbol}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row-item price-col">
+                    <div class="price-primary">${formatUSD(priceUSD)}</div>
+                    <div class="price-secondary">${formatIDR(crypto.price)}</div>
+                </div>
+                
+                <div class="row-item change-col">
+                    <div class="change-value ${change.class}">${change.value}</div>
+                    <div class="change-secondary">${crypto.change24h >= 0 ? '+' : ''}${formatUSD(priceUSD * crypto.change24h / 100)}</div>
+                </div>
+                
+                <div class="row-item volume-col">
+                    <div class="volume-value">${formatIDR(crypto.volume)}</div>
+                </div>
+                
+                <div class="row-item marketcap-col">
+                    <div class="marketcap-value">${formatIDR(crypto.marketCap)}</div>
+                </div>
+                
+                <div class="row-item action-col">
+                    <div class="action-buttons">
+                        <button class="btn-action btn-trade" data-symbol="${crypto.symbol}">
+                            <span>Trade</span>
+                        </button>
+                        <button class="btn-action btn-chart" data-symbol="${crypto.symbol}">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupEventListeners() {
+        // Delegate events to container
+        if (this.container) {
+            this.container.addEventListener('click', (e) => {
+                const tradeBtn = e.target.closest('.btn-trade');
+                const chartBtn = e.target.closest('.btn-chart');
+                const cryptoRow = e.target.closest('.crypto-row');
+                
+                if (tradeBtn) {
+                    this.handleTradeClick(tradeBtn.dataset.symbol);
+                }
+                
+                if (chartBtn) {
+                    this.handleChartClick(chartBtn.dataset.symbol);
+                }
+                
+                if (cryptoRow && !tradeBtn && !chartBtn) {
+                    this.handleRowClick(cryptoRow.dataset.id);
+                }
+            });
+        }
+    }
+
+    handleTradeClick(symbol) {
+        console.log(`Trade ${symbol}`);
+        alert(`Trading ${symbol} - Fitur akan segera hadir!`);
+    }
+
+    handleChartClick(symbol) {
+        console.log(`Show chart for ${symbol}`);
+        window.location.hash = `#chart/${symbol.toLowerCase()}`;
+    }
+
+    handleRowClick(cryptoId) {
+        console.log(`View details for ${cryptoId}`);
+        window.location.href = `/crypto/${cryptoId}`;
+    }
+
+    filterBySearch(term) {
+        const filtered = this.data.filter(crypto => 
+            crypto.name.toLowerCase().includes(term.toLowerCase()) ||
+            crypto.symbol.toLowerCase().includes(term.toLowerCase())
+        );
+        this.render(filtered);
+    }
+
+    sortBy(column, order = 'desc') {
+        const sortedData = [...this.data].sort((a, b) => {
+            let valueA, valueB;
+            
+            switch(column) {
+                case 'rank':
+                    valueA = a.rank;
+                    valueB = b.rank;
+                    break;
+                case 'price':
+                    valueA = a.price;
+                    valueB = b.price;
+                    break;
+                case 'change':
+                    valueA = a.change24h;
+                    valueB = b.change24h;
+                    break;
+                case 'volume':
+                    valueA = a.volume;
+                    valueB = b.volume;
+                    break;
+                case 'marketcap':
+                    valueA = a.marketCap;
+                    valueB = b.marketCap;
+                    break;
+                default:
+                    valueA = a.rank;
+                    valueB = b.rank;
+            }
+            
+            return order === 'desc' ? valueB - valueA : valueA - valueB;
+        });
+        
+        this.render(sortedData);
+    }
+}
+
+// ==============================================
+// MAIN APPLICATION CLASS
+// ==============================================
+
 class CryptoMarketApp {
     constructor() {
         this.binanceAPI = new BinanceAPI();
+        this.cryptoTable = new CryptoMarketTable('cryptoTableContainer');
         this.chart = null;
         this.init();
     }
@@ -499,10 +437,13 @@ class CryptoMarketApp {
         
         // Hide loading screen
         setTimeout(() => {
-            elements.loadingScreen.classList.add('fade-out');
-            setTimeout(() => {
-                elements.loadingScreen.style.display = 'none';
-            }, 300);
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 300);
+            }
         }, 1500);
         
         // Start auto-update
@@ -511,19 +452,28 @@ class CryptoMarketApp {
 
     setupEventListeners() {
         // Theme toggle
-        elements.themeToggle.addEventListener('click', () => {
-            this.toggleTheme();
-        });
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                this.toggleTheme();
+            });
+        }
 
         // Search
-        elements.searchCrypto.addEventListener('input', (e) => {
-            this.filterCrypto(e.target.value);
-        });
+        const searchCrypto = document.getElementById('searchCrypto');
+        if (searchCrypto) {
+            searchCrypto.addEventListener('input', (e) => {
+                this.filterCrypto(e.target.value);
+            });
+        }
 
         // Refresh button
-        elements.refreshData.addEventListener('click', () => {
-            this.loadAllData();
-        });
+        const refreshData = document.getElementById('refreshData');
+        if (refreshData) {
+            refreshData.addEventListener('click', () => {
+                this.loadAllData();
+            });
+        }
 
         // Filter buttons
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -535,51 +485,30 @@ class CryptoMarketApp {
         });
 
         // Pagination
-        document.getElementById('prevPage').addEventListener('click', () => {
-            if (appState.currentPage > 1) {
-                appState.currentPage--;
-                this.renderTable();
-            }
-        });
-
-        document.getElementById('nextPage').addEventListener('click', () => {
-            const totalPages = Math.ceil(appState.filteredData.length / appState.itemsPerPage);
-            if (appState.currentPage < totalPages) {
-                appState.currentPage++;
-                this.renderTable();
-            }
-        });
-
-        // Page numbers
-        document.querySelectorAll('.page-number').forEach((num, index) => {
-            num.addEventListener('click', () => {
-                appState.currentPage = index + 1;
-                this.renderTable();
-                document.querySelectorAll('.page-number').forEach(n => n.classList.remove('active'));
-                num.classList.add('active');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        
+        if (prevPage) {
+            prevPage.addEventListener('click', () => {
+                if (appState.currentPage > 1) {
+                    appState.currentPage--;
+                    this.renderTable();
+                }
             });
-        });
+        }
+        
+        if (nextPage) {
+            nextPage.addEventListener('click', () => {
+                const totalPages = Math.ceil(appState.filteredData.length / appState.itemsPerPage);
+                if (appState.currentPage < totalPages) {
+                    appState.currentPage++;
+                    this.renderTable();
+                }
+            });
+        }
 
-        // Buy/Sell buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-buy')) {
-                const cryptoId = e.target.dataset.id;
-                this.showBuyModal(cryptoId);
-            }
-            if (e.target.classList.contains('btn-sell')) {
-                const cryptoId = e.target.dataset.id;
-                this.showSellModal(cryptoId);
-            }
-            if (e.target.classList.contains('btn-details')) {
-                const cryptoId = e.target.dataset.id;
-                this.showDetailsModal(cryptoId);
-            }
-        });
-
-        // Modal close
-        document.getElementById('closeModal')?.addEventListener('click', () => {
-            document.getElementById('tradingModal')?.classList.remove('active');
-        });
+        // Live price update in header
+        this.startLivePriceUpdate();
     }
 
     async loadAllData() {
@@ -600,6 +529,11 @@ class CryptoMarketApp {
                 throw new Error('No data received from Binance');
             }
             
+            // Add rank
+            appState.cryptoData.forEach((crypto, index) => {
+                crypto.rank = index + 1;
+            });
+            
             appState.filteredData = [...appState.cryptoData];
             
             // Update BTC details
@@ -611,7 +545,7 @@ class CryptoMarketApp {
             // Update global stats
             this.updateGlobalStats();
             
-            // Render data
+            // Render tables
             this.renderTable();
             this.renderTopGainers();
             this.renderFeatured();
@@ -681,37 +615,139 @@ class CryptoMarketApp {
             'DOGE': 141000000000,
             'DOT': 1200000000,
             'MATIC': 10000000000,
-            'AVAX': 400000000,
-            'LTC': 73000000,
-            'LINK': 1000000000,
-            'UNI': 1000000000,
-            'SHIB': 589000000000000,
-            'TRX': 92000000000,
-            'ATOM': 300000000,
-            'NEAR': 1000000000,
-            'ALGO': 7000000000,
-            'VET': 72700000000,
-            'AXS': 270000000
+            'AVAX': 400000000
         };
         return supplies[symbol] || 100000000;
+    }
+
+    renderTable() {
+        // Gunakan CryptoMarketTable untuk render
+        if (this.cryptoTable) {
+            const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
+            const endIndex = startIndex + appState.itemsPerPage;
+            const pageData = appState.filteredData.slice(startIndex, endIndex);
+            
+            this.cryptoTable.render(pageData);
+            this.updatePaginationInfo();
+        }
+    }
+
+    renderTopGainers() {
+        const gainers = [...appState.cryptoData]
+            .sort((a, b) => b.change24h - a.change24h)
+            .slice(0, 5);
+        
+        const topGainers = document.getElementById('topGainers');
+        if (!topGainers) return;
+        
+        topGainers.innerHTML = '';
+        
+        gainers.forEach(crypto => {
+            const item = document.createElement('div');
+            item.className = 'gainer-item';
+            const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+            const changeSign = crypto.change24h >= 0 ? '+' : '';
+            
+            item.innerHTML = `
+                <div class="gainer-info">
+                    <img src="https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png" 
+                         alt="${crypto.name}" width="24" height="24" 
+                         onerror="this.src='https://cryptologos.cc/logos/generic-crypto-logo.png'">
+                    <div>
+                        <div>${crypto.symbol}</div>
+                        <div class="gainer-change ${changeClass}">
+                            ${changeSign}${crypto.change24h.toFixed(2)}%
+                        </div>
+                    </div>
+                </div>
+                <div>${formatIDR(crypto.price)}</div>
+            `;
+            
+            topGainers.appendChild(item);
+        });
+    }
+
+    renderFeatured() {
+        const featured = appState.cryptoData.slice(0, 4);
+        
+        const featuredCrypto = document.getElementById('featuredCrypto');
+        if (!featuredCrypto) return;
+        
+        featuredCrypto.innerHTML = '';
+        
+        featured.forEach(crypto => {
+            const card = document.createElement('div');
+            card.className = 'featured-card';
+            const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+            const changeSign = crypto.change24h >= 0 ? '+' : '';
+            
+            card.innerHTML = `
+                <div class="featured-card-header">
+                    <div class="featured-card-info">
+                        <img src="https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png" 
+                             alt="${crypto.name}" width="40" height="40" 
+                             onerror="this.src='https://cryptologos.cc/logos/generic-crypto-logo.png'">
+                        <div>
+                            <div>${crypto.name}</div>
+                            <div>${crypto.symbol}</div>
+                        </div>
+                    </div>
+                    <div class="featured-change ${changeClass}">
+                        ${changeSign}${crypto.change24h.toFixed(2)}%
+                    </div>
+                </div>
+                <div class="featured-price">${formatIDR(crypto.price)}</div>
+                <div class="featured-stats">
+                    <div>Volume 24j</div>
+                    <div>${formatIDR(crypto.volume)}</div>
+                </div>
+            `;
+            
+            featuredCrypto.appendChild(card);
+        });
     }
 
     updateBTCDetails(btcData) {
         if (!btcData) return;
         
-        elements.cryptoPriceElements.btcHigh.textContent = formatIDR(btcData.highPrice);
-        elements.cryptoPriceElements.btcLow.textContent = formatIDR(btcData.lowPrice);
-        elements.cryptoPriceElements.btcVolume.textContent = `${formatIDR(btcData.volume)} ${btcData.symbol}`;
-        elements.cryptoPriceElements.btcMarketCap.textContent = formatIDR(btcData.marketCap);
+        // Update BTC widgets
+        const elements = {
+            btcHigh: document.getElementById('btcHigh'),
+            btcLow: document.getElementById('btcLow'),
+            btcVolume: document.getElementById('btcVolume'),
+            btcMarketCap: document.getElementById('btcMarketCap'),
+            btcPriceWidget: document.getElementById('btcPriceWidget'),
+            btcChangeWidget: document.getElementById('btcChangeWidget'),
+            btcUpdateTime: document.getElementById('btcUpdateTime')
+        };
         
-        // Update chart data
+        if (elements.btcHigh) elements.btcHigh.textContent = formatIDR(btcData.highPrice);
+        if (elements.btcLow) elements.btcLow.textContent = formatIDR(btcData.lowPrice);
+        if (elements.btcVolume) elements.btcVolume.textContent = formatIDR(btcData.volume);
+        if (elements.btcMarketCap) elements.btcMarketCap.textContent = formatIDR(btcData.marketCap);
+        if (elements.btcPriceWidget) elements.btcPriceWidget.textContent = formatIDR(btcData.price);
+        
+        const changeClass = btcData.change24h >= 0 ? 'positive' : 'negative';
+        const changeSign = btcData.change24h >= 0 ? '+' : '';
+        if (elements.btcChangeWidget) {
+            elements.btcChangeWidget.textContent = `${changeSign}${btcData.change24h.toFixed(2)}%`;
+            elements.btcChangeWidget.className = `price-change-large ${changeClass}`;
+        }
+        
+        if (elements.btcUpdateTime) {
+            elements.btcUpdateTime.textContent = new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Update chart
         this.updateChart(btcData);
     }
 
     updateChart(cryptoData) {
         if (!this.chart || !cryptoData.sparkline || cryptoData.sparkline.length === 0) return;
         
-        // Update chart with new data
         const labels = cryptoData.sparkline.map((_, i) => `${i}h`);
         this.chart.data.labels = labels;
         this.chart.data.datasets[0].data = cryptoData.sparkline;
@@ -724,208 +760,35 @@ class CryptoMarketApp {
         const totalMarketCap = appState.cryptoData.reduce((sum, crypto) => sum + crypto.marketCap, 0);
         const btcDominance = btc ? (btc.marketCap / totalMarketCap * 100).toFixed(1) : '52.8';
         
-        // Format tanpa singkatan
-        elements.globalStats.volume.textContent = formatIDR(totalVolume);
-        elements.globalStats.marketCap.textContent = formatIDR(totalMarketCap);
-        elements.globalStats.dominance.textContent = `${btcDominance}%`;
+        // Update elements
+        const globalMarketCap = document.getElementById('globalMarketCap');
+        const globalVolume = document.getElementById('globalVolume');
+        const btcDominanceEl = document.getElementById('btcDominance');
+        const fearGreedIndex = document.getElementById('fearGreedIndex');
         
-        // Update fear & greed index (random for demo)
-        const fgi = Math.floor(Math.random() * 40) + 60; // 60-100
-        elements.globalStats.fearGreed.textContent = fgi;
-    }
-
-    renderTable() {
-        const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
-        const endIndex = startIndex + appState.itemsPerPage;
-        const pageData = appState.filteredData.slice(startIndex, endIndex);
-        
-        elements.cryptoTableBody.innerHTML = '';
-        
-        pageData.forEach((crypto, index) => {
-            const row = this.createTableRow(crypto, startIndex + index + 1);
-            elements.cryptoTableBody.appendChild(row);
-            
-            // Render mini chart
-            this.renderMiniChart(crypto);
-        });
-        
-        this.updatePaginationInfo();
-    }
-
-    createTableRow(crypto, index) {
-        const row = document.createElement('tr');
-        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-        const changeSign = crypto.change24h >= 0 ? '+' : '';
-        
-        row.innerHTML = `
-            <td class="sticky-col">${index}</td>
-            <td class="sticky-col">
-                <div class="crypto-name-cell">
-                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                         alt="${crypto.name}" class="crypto-icon-small" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
-                    <div>
-                        <div>${crypto.name}</div>
-                        <div class="crypto-symbol">${crypto.symbol}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="price-cell">${formatIDR(crypto.price)}</td>
-            <td>
-                <div class="change-cell ${changeClass}">
-                    ${changeSign}${crypto.change24h.toFixed(2)}%
-                </div>
-            </td>
-            <td>${formatIDR(crypto.volume)}</td>
-            <td>${formatIDR(crypto.marketCap)}</td>
-            <td>
-                <canvas class="mini-chart" id="chart-${crypto.symbol}" width="100" height="30"></canvas>
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn-action btn-buy" data-id="${crypto.symbol}">Buy</button>
-                    <button class="btn-action btn-sell" data-id="${crypto.symbol}">Sell</button>
-                    <button class="btn-action btn-details" data-id="${crypto.symbol}">Details</button>
-                </div>
-            </td>
-        `;
-        
-        return row;
-    }
-
-    renderMiniChart(crypto) {
-        const canvas = document.getElementById(`chart-${crypto.symbol}`);
-        if (!canvas || !crypto.sparkline || crypto.sparkline.length === 0) return;
-        
-        const ctx = canvas.getContext('2d');
-        const data = crypto.sparkline;
-        const width = canvas.width;
-        const height = canvas.height;
-        const step = width / (data.length - 1);
-        
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
-        
-        // Find min and max for scaling
-        const min = Math.min(...data);
-        const max = Math.max(...data);
-        const range = max - min || 1;
-        
-        // Draw line
-        ctx.beginPath();
-        ctx.strokeStyle = crypto.change24h >= 0 ? '#00d2d3' : '#ff4757';
-        ctx.lineWidth = 2;
-        
-        data.forEach((value, index) => {
-            const x = index * step;
-            const y = height - ((value - min) / range * height);
-            
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-        
-        ctx.stroke();
-    }
-
-    renderTopGainers() {
-        const gainers = [...appState.cryptoData]
-            .sort((a, b) => b.change24h - a.change24h)
-            .slice(0, 5);
-        
-        elements.topGainers.innerHTML = '';
-        
-        gainers.forEach(crypto => {
-            const item = this.createGainerItem(crypto);
-            elements.topGainers.appendChild(item);
-        });
-    }
-
-    createGainerItem(crypto) {
-        const item = document.createElement('div');
-        item.className = 'gainer-item';
-        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-        const changeSign = crypto.change24h >= 0 ? '+' : '';
-        
-        item.innerHTML = `
-            <div class="gainer-info">
-                <img src="https://s2.coinmarketcap.com/static/img/coins/32x32/${crypto.id}.png" 
-                     alt="${crypto.name}" width="24" height="24" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
-                <div>
-                    <div>${crypto.symbol}</div>
-                    <div class="gainer-change ${changeClass}">
-                        ${changeSign}${crypto.change24h.toFixed(2)}%
-                    </div>
-                </div>
-            </div>
-            <div>${formatIDR(crypto.price)}</div>
-        `;
-        
-        return item;
-    }
-
-    renderFeatured() {
-        const featured = appState.cryptoData.slice(0, 4);
-        
-        elements.featuredCrypto.innerHTML = '';
-        
-        featured.forEach(crypto => {
-            const card = this.createFeaturedCard(crypto);
-            elements.featuredCrypto.appendChild(card);
-        });
-    }
-
-    createFeaturedCard(crypto) {
-        const card = document.createElement('div');
-        card.className = 'featured-card';
-        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-        const changeSign = crypto.change24h >= 0 ? '+' : '';
-        
-        card.innerHTML = `
-            <div class="featured-card-header">
-                <div class="featured-card-info">
-                    <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                         alt="${crypto.name}" width="40" height="40" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
-                    <div>
-                        <div>${crypto.name}</div>
-                        <div>${crypto.symbol}</div>
-                    </div>
-                </div>
-                <div class="featured-change ${changeClass}">
-                    ${changeSign}${crypto.change24h.toFixed(2)}%
-                </div>
-            </div>
-            <div class="featured-price">${formatIDR(crypto.price)}</div>
-            <div class="featured-stats">
-                <div>Volume 24j</div>
-                <div>${formatIDR(crypto.volume)}</div>
-            </div>
-        `;
-        
-        return card;
+        if (globalMarketCap) globalMarketCap.textContent = formatIDR(totalMarketCap);
+        if (globalVolume) globalVolume.textContent = formatIDR(totalVolume);
+        if (btcDominanceEl) btcDominanceEl.textContent = `${btcDominance}%`;
+        if (fearGreedIndex) {
+            const fgi = Math.floor(Math.random() * 40) + 60; // 60-100
+            fearGreedIndex.textContent = fgi;
+        }
     }
 
     updatePrices() {
         const btc = appState.cryptoData.find(c => c.symbol === 'BTC');
-        if (btc) {
-            elements.cryptoPriceElements.btcPrice.textContent = formatIDR(btc.price);
-            elements.cryptoPriceElements.btcPriceWidget.textContent = formatIDR(btc.price);
-            
+        if (!btc) return;
+        
+        // Update main BTC price
+        const btcPrice = document.getElementById('btcPrice');
+        const btcChange = document.getElementById('btcChange');
+        
+        if (btcPrice) btcPrice.textContent = formatIDR(btc.price);
+        if (btcChange) {
             const changeText = `${btc.change24h >= 0 ? '+' : ''}${btc.change24h.toFixed(2)}%`;
-            elements.cryptoPriceElements.btcChange.textContent = changeText;
-            elements.cryptoPriceElements.btcChangeWidget.textContent = changeText;
-            
-            // Update change color
+            btcChange.textContent = changeText;
             const changeClass = btc.change24h >= 0 ? 'positive' : 'negative';
-            elements.cryptoPriceElements.btcChange.className = `chart-change ${changeClass}`;
-            elements.cryptoPriceElements.btcChangeWidget.className = `price-change-large ${changeClass}`;
-            
-            // Update time
-            elements.cryptoPriceElements.btcUpdateTime.textContent = new Date().toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            btcChange.className = `chart-change ${changeClass}`;
         }
     }
 
@@ -937,17 +800,16 @@ class CryptoMarketApp {
             second: '2-digit'
         });
         
-        elements.lastUpdated.textContent = timeString;
-        elements.cryptoPriceElements.btcUpdateTime.textContent = timeString;
-        document.getElementById('footerUpdateTime').textContent = timeString;
+        const lastUpdated = document.getElementById('lastUpdated');
+        const footerUpdateTime = document.getElementById('footerUpdateTime');
+        
+        if (lastUpdated) lastUpdated.textContent = timeString;
+        if (footerUpdateTime) footerUpdateTime.textContent = timeString;
     }
 
     startWebSocket() {
         try {
-            // Get symbols for WebSocket (limit to 5 for stability)
             const symbols = CRYPTO_LIST.slice(0, 5).map(c => c.binanceSymbol.toLowerCase());
-            
-            // Create WebSocket connection
             const ws = this.binanceAPI.createWebSocket(symbols, (data) => {
                 this.handleWebSocketMessage(data);
             });
@@ -959,66 +821,50 @@ class CryptoMarketApp {
     }
 
     handleWebSocketMessage(data) {
-        // Update specific cryptocurrency data
-        const symbol = data.s.toUpperCase(); // Symbol from Binance (e.g., BTCIDR)
+        const symbol = data.s.toUpperCase();
         const crypto = appState.cryptoData.find(c => c.binanceSymbol === symbol);
         
         if (crypto) {
-            // Update crypto data
-            crypto.price = parseFloat(data.c); // Current price
-            crypto.change24h = parseFloat(data.P); // Price change percent
-            crypto.highPrice = parseFloat(data.h); // High price
-            crypto.lowPrice = parseFloat(data.l); // Low price
-            crypto.volume = parseFloat(data.v); // Volume
+            crypto.price = parseFloat(data.c);
+            crypto.change24h = parseFloat(data.P);
+            crypto.highPrice = parseFloat(data.h);
+            crypto.lowPrice = parseFloat(data.l);
+            crypto.volume = parseFloat(data.v);
             
-            // Update UI if this crypto is currently displayed
-            this.updateCryptoUI(crypto);
+            // Update tables
+            this.renderTable();
+            this.renderTopGainers();
+            this.renderFeatured();
             
-            // If it's BTC, update main widgets
             if (crypto.symbol === 'BTC') {
                 this.updatePrices();
                 this.updateBTCDetails(crypto);
             }
             
-            // Update timestamp
             this.updateTimestamp();
         }
     }
 
-    updateCryptoUI(crypto) {
-        // Find and update table row
-        const rows = document.querySelectorAll('#cryptoTableBody tr');
-        rows.forEach(row => {
-            const symbolCell = row.querySelector('.crypto-symbol');
-            if (symbolCell && symbolCell.textContent === crypto.symbol) {
-                // Update price cell
-                const priceCell = row.querySelector('.price-cell');
-                if (priceCell) {
-                    priceCell.textContent = formatIDR(crypto.price);
-                }
+    startLivePriceUpdate() {
+        const liveBtcPrice = document.getElementById('liveBtcPrice');
+        if (!liveBtcPrice) return;
+        
+        // Update live price every 5 seconds
+        setInterval(() => {
+            const btc = appState.cryptoData.find(c => c.symbol === 'BTC');
+            if (btc) {
+                // Simulate small price changes
+                const randomChange = (Math.random() * 0.02 - 0.01);
+                const newPrice = btc.price * (1 + randomChange);
                 
-                // Update change cell
-                const changeCell = row.querySelector('.change-cell');
-                if (changeCell) {
-                    const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
-                    const changeSign = crypto.change24h >= 0 ? '+' : '';
-                    changeCell.className = `change-cell ${changeClass}`;
-                    changeCell.textContent = `${changeSign}${crypto.change24h.toFixed(2)}%`;
-                }
+                liveBtcPrice.textContent = formatIDR(newPrice);
+                liveBtcPrice.style.color = randomChange >= 0 ? '#00d2d3' : '#ff4757';
                 
-                // Update volume cell
-                const volumeCell = row.querySelector('td:nth-child(5)');
-                if (volumeCell) {
-                    volumeCell.textContent = formatIDR(crypto.volume);
-                }
+                setTimeout(() => {
+                    liveBtcPrice.style.color = '';
+                }, 1000);
             }
-        });
-        
-        // Update top gainers if affected
-        this.renderTopGainers();
-        
-        // Update featured if affected
-        this.renderFeatured();
+        }, 5000);
     }
 
     filterCrypto(searchTerm) {
@@ -1056,9 +902,10 @@ class CryptoMarketApp {
     }
 
     initChart() {
-        const ctx = elements.btcChart.getContext('2d');
+        const ctx = document.getElementById('btcChart');
+        if (!ctx) return;
         
-        this.chart = new Chart(ctx, {
+        this.chart = new Chart(ctx.getContext('2d'), {
             type: 'line',
             data: {
                 labels: [],
@@ -1075,50 +922,34 @@ class CryptoMarketApp {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: (context) => {
-                                return formatIDR(context.raw);
-                            }
-                        }
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    x: {
-                        display: false,
-                        grid: { display: false }
-                    },
+                    x: { display: false },
                     y: {
-                        grid: {
-                            color: 'rgba(255,255,255,0.1)'
-                        },
+                        grid: { color: 'rgba(255,255,255,0.1)' },
                         ticks: {
                             color: 'rgba(255,255,255,0.7)',
-                            callback: (value) => {
-                                return `Rp ${Math.round(value).toLocaleString('id-ID')}`;
-                            }
+                            callback: (value) => `Rp ${Math.round(value).toLocaleString('id-ID')}`
                         }
                     }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'nearest'
                 }
             }
         });
     }
 
     updatePaginationInfo() {
-        const startItem = (appState.currentPage - 1) * appState.itemsPerPage + 1;
-        const endItem = Math.min(appState.currentPage * appState.itemsPerPage, appState.filteredData.length);
+        const startItem = document.getElementById('startItem');
+        const endItem = document.getElementById('endItem');
+        const totalItems = document.getElementById('totalItems');
         
-        document.getElementById('startItem').textContent = startItem;
-        document.getElementById('endItem').textContent = endItem;
-        document.getElementById('totalItems').textContent = appState.filteredData.length;
+        if (startItem && endItem && totalItems) {
+            const start = (appState.currentPage - 1) * appState.itemsPerPage + 1;
+            const end = Math.min(appState.currentPage * appState.itemsPerPage, appState.filteredData.length);
+            
+            startItem.textContent = start;
+            endItem.textContent = end;
+            totalItems.textContent = appState.filteredData.length;
+        }
     }
 
     setTheme(theme) {
@@ -1126,8 +957,10 @@ class CryptoMarketApp {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
         
-        const icon = elements.themeToggle.querySelector('i');
-        icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        const icon = document.querySelector('#themeToggle i');
+        if (icon) {
+            icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
     }
 
     toggleTheme() {
@@ -1136,41 +969,16 @@ class CryptoMarketApp {
     }
 
     startAutoUpdate() {
-        // Update data periodically (fallback if WebSocket fails)
         setInterval(() => {
             if (!CONFIG.useWebSocket || Object.keys(appState.wsConnections).length === 0) {
                 this.loadAllData();
             }
-        }, CONFIG.updateInterval * 3); // Every 30 seconds
+        }, CONFIG.updateInterval * 3);
     }
 
     useDemoData() {
-        // Generate demo data
-        appState.cryptoData = CRYPTO_LIST.map(crypto => {
-            const price = getRandomPrice(1000, 2000000000);
-            const change = (Math.random() * 20 - 10).toFixed(2);
-            const supply = this.getEstimatedSupply(crypto.symbol);
-            
-            return {
-                id: crypto.cmcId,
-                name: crypto.name,
-                symbol: crypto.symbol,
-                binanceSymbol: crypto.binanceSymbol,
-                price: price,
-                openPrice: price * (1 - parseFloat(change) / 100),
-                highPrice: price * (1 + Math.random() * 0.05),
-                lowPrice: price * (1 - Math.random() * 0.05),
-                change24h: parseFloat(change),
-                volume: getRandomPrice(10000000, 100000000000),
-                quoteVolume: getRandomPrice(10000000, 100000000000),
-                marketCap: price * supply,
-                supply: supply,
-                sparkline: Array(24).fill().map(() => price * (0.95 + Math.random() * 0.1)),
-                lastUpdate: new Date()
-            };
-        });
-        
-        appState.filteredData = [...appState.cryptoData];
+        appState.cryptoData = DEMO_DATA;
+        appState.filteredData = [...DEMO_DATA];
         this.renderTable();
         this.renderTopGainers();
         this.renderFeatured();
@@ -1207,147 +1015,17 @@ class CryptoMarketApp {
         
         document.body.appendChild(errorDiv);
         
-        setTimeout(() => {
-            errorDiv.remove();
-        }, 5000);
+        setTimeout(() => errorDiv.remove(), 5000);
         
         errorDiv.querySelector('.error-close').addEventListener('click', () => {
             errorDiv.remove();
         });
     }
-
-    showBuyModal(symbol) {
-        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
-        if (!crypto) return;
-        
-        // Create modal
-        const modal = document.getElementById('tradingModal');
-        const modalBody = modal.querySelector('.modal-body');
-        
-        modalBody.innerHTML = `
-            <div class="buy-modal">
-                <h4>Buy ${crypto.name} (${crypto.symbol})</h4>
-                <div class="current-price">Current Price: ${formatIDR(crypto.price)}</div>
-                
-                <div class="buy-form">
-                    <div class="form-group">
-                        <label>Amount (${crypto.symbol})</label>
-                        <input type="number" id="buyAmount" step="0.000001" placeholder="0.000000">
-                    </div>
-                    <div class="form-group">
-                        <label>Total (IDR)</label>
-                        <input type="text" id="buyTotal" readonly value="Rp 0">
-                    </div>
-                    <button class="btn-buy-confirm">Confirm Buy</button>
-                </div>
-            </div>
-        `;
-        
-        modal.classList.add('active');
-        
-        // Add calculation
-        const amountInput = document.getElementById('buyAmount');
-        const totalInput = document.getElementById('buyTotal');
-        
-        amountInput.addEventListener('input', () => {
-            const amount = parseFloat(amountInput.value) || 0;
-            const total = amount * crypto.price;
-            totalInput.value = formatIDR(total);
-        });
-    }
-
-    showSellModal(symbol) {
-        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
-        if (!crypto) return;
-        
-        // Create modal
-        const modal = document.getElementById('tradingModal');
-        const modalBody = modal.querySelector('.modal-body');
-        
-        modalBody.innerHTML = `
-            <div class="sell-modal">
-                <h4>Sell ${crypto.name} (${crypto.symbol})</h4>
-                <div class="current-price">Current Price: ${formatIDR(crypto.price)}</div>
-                
-                <div class="sell-form">
-                    <div class="form-group">
-                        <label>Amount (${crypto.symbol})</label>
-                        <input type="number" id="sellAmount" step="0.000001" placeholder="0.000000">
-                    </div>
-                    <div class="form-group">
-                        <label>Total (IDR)</label>
-                        <input type="text" id="sellTotal" readonly value="Rp 0">
-                    </div>
-                    <button class="btn-sell-confirm">Confirm Sell</button>
-                </div>
-            </div>
-        `;
-        
-        modal.classList.add('active');
-        
-        // Add calculation
-        const amountInput = document.getElementById('sellAmount');
-        const totalInput = document.getElementById('sellTotal');
-        
-        amountInput.addEventListener('input', () => {
-            const amount = parseFloat(amountInput.value) || 0;
-            const total = amount * crypto.price;
-            totalInput.value = formatIDR(total);
-        });
-    }
-
-    showDetailsModal(symbol) {
-        const crypto = appState.cryptoData.find(c => c.symbol === symbol);
-        if (!crypto) return;
-        
-        const modal = document.getElementById('tradingModal');
-        const modalBody = modal.querySelector('.modal-body');
-        
-        modalBody.innerHTML = `
-            <div class="crypto-detail">
-                <div class="detail-header">
-                    <img src="https://s2.coinmarketcap.com/static/img/coins/128x128/${crypto.id}.png" 
-                         alt="${crypto.name}" width="64" height="64" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
-                    <div>
-                        <h3>${crypto.name} (${crypto.symbol})</h3>
-                        <div class="detail-price">${formatIDR(crypto.price)}</div>
-                        <div class="detail-change ${crypto.change24h >= 0 ? 'positive' : 'negative'}">
-                            ${crypto.change24h >= 0 ? '+' : ''}${crypto.change24h.toFixed(2)}% (24h)
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-stats">
-                    <div class="stat-row">
-                        <span>High 24h:</span>
-                        <span>${formatIDR(crypto.highPrice)}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Low 24h:</span>
-                        <span>${formatIDR(crypto.lowPrice)}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Volume 24h:</span>
-                        <span>${formatIDR(crypto.volume)}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Market Cap:</span>
-                        <span>${formatIDR(crypto.marketCap)}</span>
-                    </div>
-                    <div class="stat-row">
-                        <span>Circulating Supply:</span>
-                        <span>${crypto.supply.toLocaleString('id-ID')} ${crypto.symbol}</span>
-                    </div>
-                </div>
-                <div class="detail-actions">
-                    <button class="btn-action btn-buy" style="width: 100%; margin-bottom: 10px;" data-id="${crypto.symbol}">Buy ${crypto.symbol}</button>
-                    <button class="btn-action btn-sell" style="width: 100%;" data-id="${crypto.symbol}">Sell ${crypto.symbol}</button>
-                </div>
-            </div>
-        `;
-        
-        modal.classList.add('active');
-    }
 }
+
+// ==============================================
+// INITIALIZE APPLICATION
+// ==============================================
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -1356,15 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global utility functions
 window.formatIDR = formatIDR;
-window.formatChange = (change) => {
-    const sign = change >= 0 ? '+' : '';
-    const colorClass = change >= 0 ? 'positive' : 'negative';
-    return {
-        text: `${sign}${change.toFixed(2)}%`,
-        class: colorClass,
-        isPositive: change >= 0
-    };
-};
+window.formatChange = formatChange;
 
 // Auto-refresh when page becomes visible
 document.addEventListener('visibilitychange', () => {
@@ -1372,129 +1042,16 @@ document.addEventListener('visibilitychange', () => {
         window.cryptoApp.loadAllData();
     }
 });
-// Tambahkan di script.js
-class PerformanceMonitor {
-    constructor() {
-        this.metrics = {};
-        this.init();
-    }
 
-    init() {
-        // Capture performance metrics
-        if ('performance' in window) {
-            this.capturePerformanceMetrics();
-        }
-        
-        // Monitor WebSocket performance
-        this.monitorWebSocket();
-        
-        // Monitor API response times
-        this.monitorAPI();
-    }
-
-    capturePerformanceMetrics() {
-        // First Contentful Paint
-        const fcpObserver = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                if (entry.name === 'first-contentful-paint') {
-                    this.metrics.fcp = entry.startTime;
-                    console.log(`FCP: ${entry.startTime}ms`);
-                }
-            }
-        });
-        fcpObserver.observe({ entryTypes: ['paint'] });
-
-        // Largest Contentful Paint
-        const lcpObserver = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                this.metrics.lcp = entry.startTime;
-                console.log(`LCP: ${entry.startTime}ms`);
-            }
-        });
-        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-
-        // First Input Delay
-        const fidObserver = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                this.metrics.fid = entry.processingStart - entry.startTime;
-                console.log(`FID: ${this.metrics.fid}ms`);
-            }
-        });
-        fidObserver.observe({ entryTypes: ['first-input'] });
-
-        // Cumulative Layout Shift
-        let clsValue = 0;
-        const clsObserver = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-                if (!entry.hadRecentInput) {
-                    clsValue += entry.value;
-                    this.metrics.cls = clsValue;
-                    console.log(`CLS: ${clsValue}`);
-                }
-            }
-        });
-        clsObserver.observe({ entryTypes: ['layout-shift'] });
-    }
-
-    monitorWebSocket() {
-        const originalWebSocket = window.WebSocket;
-        window.WebSocket = function(...args) {
-            const ws = new originalWebSocket(...args);
-            const startTime = Date.now();
-            
-            ws.addEventListener('open', () => {
-                const connectTime = Date.now() - startTime;
-                this.metrics.wsConnectTime = connectTime;
-                console.log(`WebSocket connected in ${connectTime}ms`);
-            });
-            
-            ws.addEventListener('error', (error) => {
-                console.error('WebSocket error:', error);
-                this.reportError('WebSocket', error);
-            });
-            
-            return ws;
-        };
-    }
-
-    monitorAPI() {
-        const originalFetch = window.fetch;
-        window.fetch = async function(...args) {
-            const startTime = Date.now();
-            
-            try {
-                const response = await originalFetch(...args);
-                const responseTime = Date.now() - startTime;
-                
-                console.log(`API ${args[0]} responded in ${responseTime}ms`);
-                
-                // Track slow responses
-                if (responseTime > 1000) {
-                    console.warn(`Slow API response: ${args[0]} (${responseTime}ms)`);
-                }
-                
-                return response;
-            } catch (error) {
-                console.error('API fetch error:', error);
-                throw error;
-            }
-        };
-    }
-
-    reportError(type, error) {
-        // Send to analytics
-        if (window.gtag) {
-            gtag('event', 'exception', {
-                description: `${type}: ${error.message}`,
-                fatal: false
-            });
+// Live price in header
+setInterval(() => {
+    const liveBtcPrice = document.getElementById('liveBtcPrice');
+    if (liveBtcPrice && window.cryptoApp) {
+        const btc = window.cryptoApp.cryptoData?.find(c => c.symbol === 'BTC');
+        if (btc) {
+            const randomChange = (Math.random() * 0.02 - 0.01);
+            const newPrice = btc.price * (1 + randomChange);
+            liveBtcPrice.textContent = formatIDR(newPrice);
         }
     }
-
-    getMetrics() {
-        return this.metrics;
-    }
-}
-
-// Initialize performance monitoring
-window.performanceMonitor = new PerformanceMonitor();
+}, 5000);
