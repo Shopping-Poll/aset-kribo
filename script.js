@@ -277,7 +277,12 @@ class CryptoMarketApp {
     }
 
     async fetchFromAPI() {
+    try {
+        console.log('Fetching data from CoinMarketCap API...');
+        
         const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=${appState.currentCurrency}`;
+        
+        console.log('API URL:', url);
         
         const response = await fetch(url, {
             headers: {
@@ -286,20 +291,45 @@ class CryptoMarketApp {
             }
         });
         
-        const data = await response.json();
+        console.log('API Response Status:', response.status);
         
-        return data.data.map(crypto => ({
-            id: crypto.id,
-            name: crypto.name,
-            symbol: crypto.symbol,
-            price: crypto.quote[appState.currentCurrency].price,
-            change24h: crypto.quote[appState.currentCurrency].percent_change_24h,
-            marketCap: crypto.quote[appState.currentCurrency].market_cap,
-            volume24h: crypto.quote[appState.currentCurrency].volume_24h,
-            supply: crypto.circulating_supply,
-            sparkline: [] // API tidak menyediakan sparkline langsung
-        }));
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('API Response Data:', data);
+        
+        // Cek jika ada error dari CMC
+        if (data.status.error_code !== 0) {
+            console.error('CMC API Error:', data.status.error_message);
+            throw new Error(data.status.error_message);
+        }
+        
+        // Transform data
+        const transformedData = data.data.map(crypto => {
+            const quote = crypto.quote[appState.currentCurrency];
+            return {
+                id: crypto.id,
+                name: crypto.name,
+                symbol: crypto.symbol,
+                price: quote?.price || 0,
+                change24h: quote?.percent_change_24h || 0,
+                marketCap: quote?.market_cap || 0,
+                volume24h: quote?.volume_24h || 0,
+                supply: crypto.circulating_supply || crypto.total_supply || 0,
+                sparkline: []
+            };
+        });
+        
+        console.log('Transformed data:', transformedData);
+        return transformedData;
+        
+    } catch (error) {
+        console.error('Error in fetchFromAPI:', error);
+        throw error;
     }
+}
 
     renderTable() {
         const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
