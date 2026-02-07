@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoMarket ID - Real-time Crypto Tracking</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="crypto-loader">
+                <div class="btc-logo">
+                    <i class="fab fa-bitcoin"></i>
+                </div>
+                <div class="loading-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+            <p>Memuat data market real-time...</p>
+        </div>
+    </div>
+
+    <!-- Header & Navigation -->
+    <header class="main-header">
+        <div class="container">
+            <nav class="navbar">
+                <div class="logo">
+                    <a href="#">
+                        <i class="fab fa-bitcoin"></i>
+                        <span>Crypto<span class="logo-highlight">Market</span>.ID</span>
+                    </a>
+                </div>
+                
+                <div class="nav-center">
+                    <ul class="nav-menu">
+                        <li><a href="#" class="active"><i class="fas fa-chart-line"></i> Market</a></li>
+                        <li><a href="#"><i class="fas fa-fire"></i> Trending</a></li>
+                        <li><a href="#"><i class="fas fa-star"></i> Watchlist</a></li>
+                        <li><a href="#"><i class="fas fa-newspaper"></i> News</a></li>
+                        <li><a href="#"><i class="fas fa-wallet"></i> Portfolio</a></li>
+                    </ul>
+                </div>
+                
+                <div class="nav-right">
+                    <div class="theme-switch">
+                        <button id="themeToggle">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
+                        <button class="btn-register">Register</button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Market Stats Bar -->
+    <div class="market-stats-bar">
+        <div class="container">
+            <div class="stats-scroll">
+                <div class="stat-item">
+                    <span class="stat-label">Total Market Cap</span>
+                    <span class="stat-value" id="globalMarketCap">$2.1T</span>
+                    <span class="stat-change positive">+3.2%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">24h Volume</span>
+                    <span class="stat-value" id="globalVolume">$85.4B</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">BTC Dominance</span>
+                    <span class="stat-value" id="btcDominance">52.8%</span>
+                    <span class="stat-change negative">-0.5%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Fear & Greed Index</span>
+                    <span class="stat-value" id="fearGreedIndex">76</span>
+                    <span class="stat-label" style="color:#00d2d3; margin-left:5px;">(Extreme Greed)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1>Track Crypto Markets in <span class="highlight">Real-Time</span></h1>
+                <p class="hero-subtitle">Live prices, charts, and analytics for 10,000+ cryptocurrencies</p>
+                
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchCrypto" placeholder="Cari cryptocurrency (BTC, ETH, ADA...)">
+                    <button class="btn-search">Search</button>
+                </div>
+                
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div>
+                            <div class="hero-stat-value" id="totalCryptos">12,345</div>
+                            <div class="hero-stat-label">Cryptocurrencies</div>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div>
+                            <div class="hero-stat-value" id="totalExchanges">500+</div>
+                            <div class="hero-stat-label">Exchanges</div>
+                        </div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div>
+                            <div class="hero-stat-value" id="marketCap">$2.1T</div>
+                            <div class="hero-stat-label">Market Cap</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-chart">
+                <div class="chart-container">
+                    <canvas id="btcChart"></canvas>
+                </div>
+                <div class="chart-info">
+                    <div class="chart-crypto">
+                        <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" alt="BTC">
+                        <div>
+                            <div class="crypto-name">Bitcoin (BTC)</div>
+                            <div class="crypto-price" id="btcPrice">Rp 1,196,700,000</div>
+                        </div>
+                    </div>
+                    <div class="chart-change positive" id="btcChange">+8.90% (24h)</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column: Crypto Table -->
+            <div class="main-column">
+                <!-- Table Controls -->
+                <div class="table-controls">
+                    <div class="controls-left">
+                        <h2><i class="fas fa-list"></i> Cryptocurrency Prices</h2>
+                        <div class="table-filters">
+                            <button class="filter-btn active" data-filter="all">All</button>
+                            <button class="filter-btn" data-filter="gainers">Top Gainers</button>
+                            <button class="filter-btn" data-filter="losers">Top Losers</button>
+                            <button class="filter-btn" data-filter="volume">High Volume</button>
+                        </div>
+                    </div>
+                    <div class="controls-right">
+                        <div class="currency-selector">
+                            <span>Show in:</span>
+                            <select id="currencySelect">
+                                <option value="IDR">IDR (Rupiah)</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                        <div class="refresh-btn">
+                            <button id="refreshData">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                                <span class="last-updated" id="lastUpdated">Now</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crypto Table -->
+                <div class="table-responsive">
+                    <table class="crypto-table" id="cryptoTable">
+                        <thead>
+                            <tr>
+                                <th class="sticky-col">#</th>
+                                <th class="sticky-col">Name</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>24h Volume</th>
+                                <th>Market Cap</th>
+                                <th>Last 7 Days</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cryptoTableBody">
+                            <!-- Data akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="page-btn" id="prevPage"><i class="fas fa-chevron-left"></i></button>
+                    <div class="page-numbers">
+                        <span class="page-number active">1</span>
+                        <span class="page-number">2</span>
+                        <span class="page-number">3</span>
+                        <span class="page-number">...</span>
+                        <span class="page-number">10</span>
+                    </div>
+                    <button class="page-btn" id="nextPage"><i class="fas fa-chevron-right"></i></button>
+                    <div class="page-info">
+                        Showing <span id="startItem">1</span>-<span id="endItem">20</span> of <span id="totalItems">100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Widgets -->
+            <div class="sidebar-column">
+                <!-- BTC/IDR Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3><i class="fab fa-bitcoin"></i> BTC/IDR Detail</h3>
+                        <div class="widget-actions">
+                            <button class="widget-btn"><i class="fas fa-expand-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div class="price-widget">
+                            <div class="current-price-large" id="btcPriceWidget">Rp 1,196,700,000</div>
+                            <div class="price-change-large positive" id="btcChangeWidget">+8.90%</div>
+                            <div class="price-time">Updated: <span id="btcUpdateTime">Just now</span></div>
+                        </div>
+                        
+                        <div class="price-stats">
+                            <div class="price-stat">
+                                <span class="stat-label">24h High</span>
+                                <span class="stat-value" id="btcHigh">Rp 1,219,000,000</span>
+                            </div>
+                            <div class="price-stat">
+                                <span class="stat-label">24h Low</span>
+                                <span class="stat-value" id="btcLow">Rp 1,084,182,000</span>
+                            </div>
+                            <div class="price-stat">
+                                <span class="stat-label">24h Volume</span>
+                                <span class="stat-value" id="btcVolume">137.8B IDR</span>
+                            </div>
+                            <div class="price-stat">
+                                <span class="stat-label">Market Cap</span>
+                                <span class="stat-value" id="btcMarketCap">Rp 23,600T</span>
+                            </div>
+                        </div>
+                        
+                        <div class="order-book">
+                            <h4>Order Book</h4>
+                            <div class="order-book-grid">
+                                <div class="bids">
+                                    <div class="order-header">
+                                        <span>Bids (Buy)</span>
+                                        <span>Amount</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price bid">Rp 1,197,500,000</span>
+                                        <span>0.452 BTC</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price bid">Rp 1,197,200,000</span>
+                                        <span>1.234 BTC</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price bid">Rp 1,196,800,000</span>
+                                        <span>0.789 BTC</span>
+                                    </div>
+                                </div>
+                                <div class="asks">
+                                    <div class="order-header">
+                                        <span>Asks (Sell)</span>
+                                        <span>Amount</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price ask">Rp 1,198,998,000</span>
+                                        <span>0.321 BTC</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price ask">Rp 1,199,500,000</span>
+                                        <span>0.654 BTC</span>
+                                    </div>
+                                    <div class="order-item">
+                                        <span class="price ask">Rp 1,200,000,000</span>
+                                        <span>1.012 BTC</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Gainers Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3><i class="fas fa-chart-line"></i> Top Gainers (24h)</h3>
+                    </div>
+                    <div class="widget-content">
+                        <div class="gainers-list" id="topGainers">
+                            <!-- Data akan diisi oleh JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market News Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3><i class="fas fa-newspaper"></i> Crypto News</h3>
+                    </div>
+                    <div class="widget-content">
+                        <div class="news-list">
+                            <div class="news-item">
+                                <div class="news-time">2 hours ago</div>
+                                <div class="news-title">Bitcoin ETF Inflows Hit Record High</div>
+                                <div class="news-source">CoinDesk</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-time">4 hours ago</div>
+                                <div class="news-title">Ethereum Shanghai Upgrade Completed Successfully</div>
+                                <div class="news-source">CryptoSlate</div>
+                            </div>
+                            <div class="news-item">
+                                <div class="news-time">6 hours ago</div>
+                                <div class="news-title">Indonesia Announces New Crypto Regulation Framework</div>
+                                <div class="news-source">Kompas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exchange Rate Widget -->
+                <div class="widget">
+                    <div class="widget-header">
+                        <h3><i class="fas fa-exchange-alt"></i> Exchange Rates</h3>
+                    </div>
+                    <div class="widget-content">
+                        <div class="exchange-rates">
+                            <div class="rate-item">
+                                <span>USD/IDR</span>
+                                <span class="rate-value">15,678</span>
+                            </div>
+                            <div class="rate-item">
+                                <span>EUR/IDR</span>
+                                <span class="rate-value">17,234</span>
+                            </div>
+                            <div class="rate-item">
+                                <span>GBP/IDR</span>
+                                <span class="rate-value">19,876</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Section -->
+        <section class="featured-section">
+            <h2><i class="fas fa-star"></i> Featured Cryptocurrencies</h2>
+            <div class="featured-grid" id="featuredCrypto">
+                <!-- Data akan diisi oleh JavaScript -->
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="main-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <i class="fab fa-bitcoin"></i>
+                        <span>CryptoMarket.ID</span>
+                    </div>
+                    <p class="footer-description">Real-time cryptocurrency market data, prices, and portfolio tracking.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Market Data</h4>
+                    <ul>
+                        <li><a href="#">Cryptocurrencies</a></li>
+                        <li><a href="#">Exchanges</a></li>
+                        <li><a href="#">Market Cap</a></li>
+                        <li><a href="#">Trading Volume</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">API Documentation</a></li>
+                        <li><a href="#">Crypto Glossary</a></li>
+                        <li><a href="#">Blog & News</a></li>
+                        <li><a href="#">Help Center</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                        <li><a href="#">Disclaimer</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div class="container">
+                    <p>&copy; 2024 CryptoMarket.ID. All rights reserved. Data provided by CoinMarketCap API.</p>
+                    <div class="footer-stats">
+                        <span><i class="fas fa-server"></i> API Status: <span class="status online">Online</span></span>
+                        <span><i class="fas fa-clock"></i> Updated: <span id="footerUpdateTime">Just now</span></span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Trading View Modal -->
+    <div class="modal" id="tradingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Trading View</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Trading view akan diisi -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
