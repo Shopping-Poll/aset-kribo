@@ -240,41 +240,109 @@ class CryptoMarketApp {
     }
 
     async loadData() {
-        try {
-            if (CONFIG.demoMode) {
-                // Use demo data
-                appState.cryptoData = DEMO_DATA.cryptocurrencies;
-                appState.filteredData = [...appState.cryptoData];
-                
-                // Update BTC details
-                this.updateBTCDetails(DEMO_DATA.btcDetails);
-                
-                // Update global stats
-                this.updateGlobalStats();
-            } else {
-                // Fetch from CoinMarketCap API
-                const data = await this.fetchFromAPI();
-                appState.cryptoData = data;
-                appState.filteredData = [...data];
-            }
-            
-            // Render data
-            this.renderTable();
-            this.renderTopGainers();
-            this.renderFeatured();
-            this.updatePrices();
-            
-            // Update timestamp
-            this.updateTimestamp();
-            
-        } catch (error) {
-            console.error('Error loading data:', error);
-            // Fallback to demo data
+    try {
+        console.log('Loading crypto data...');
+        
+        if (CONFIG.demoMode) {
+            console.log('Using DEMO mode');
+            // Use demo data
             appState.cryptoData = DEMO_DATA.cryptocurrencies;
             appState.filteredData = [...appState.cryptoData];
-            this.renderTable();
+            
+            // Update BTC details
+            this.updateBTCDetails(DEMO_DATA.btcDetails);
+            
+            // Update global stats
+            this.updateGlobalStats();
+        } else {
+            console.log('Fetching from REAL API...');
+            // Fetch from CoinMarketCap API
+            const data = await this.fetchFromAPI();
+            console.log('API Data received:', data);
+            
+            appState.cryptoData = data;
+            appState.filteredData = [...appState.cryptoData];
+            
+            // Update BTC details from API
+            const btcData = data.find(c => c.symbol === 'BTC');
+            if (btcData) {
+                this.updateBTCDetails({
+                    high24h: btcData.price * 1.02, // Simulasi high
+                    low24h: btcData.price * 0.98,  // Simulasi low
+                    volume: btcData.volume24h,
+                    marketCap: btcData.marketCap
+                });
+            }
+            
+            // Update global stats
+            this.updateGlobalStats();
         }
+        
+        // Render data
+        this.renderTable();
+        this.renderTopGainers();
+        this.renderFeatured();
+        this.updatePrices();
+        
+        // Update timestamp
+        this.updateTimestamp();
+        
+        console.log('Data loaded successfully!');
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        
+        // Show error to user
+        this.showError('Gagal memuat data. Menggunakan data demo.');
+        
+        // Fallback to demo data
+        appState.cryptoData = DEMO_DATA.cryptocurrencies;
+        appState.filteredData = [...appState.cryptoData];
+        this.renderTable();
+        this.renderTopGainers();
+        this.renderFeatured();
+        this.updatePrices();
     }
+}
+
+// Tambahkan fungsi showError
+showError(message) {
+    // Create error notification
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-notification';
+    errorDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${message}</span>
+        <button class="error-close">&times;</button>
+    `;
+    
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff4757;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 9999;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    `;
+    
+    document.body.appendChild(errorDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        errorDiv.remove();
+    }, 5000);
+    
+    // Close button
+    errorDiv.querySelector('.error-close').addEventListener('click', () => {
+        errorDiv.remove();
+    });
+}
 
     async fetchFromAPI() {
     try {
