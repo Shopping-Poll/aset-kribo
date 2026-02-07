@@ -1,0 +1,38 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /private/
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*.php$
+
+# Sitemap
+Sitemap: https://cryptomarketkribo.com/sitemap.xml
+
+# Crawl delay untuk API
+User-agent: *
+Crawl-delay: 10
+
+# Blokir AI scrapers tertentu
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+# Izinkan search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 5
+
+User-agent: DuckDuckBot
+Allow: /
+Crawl-delay: 5

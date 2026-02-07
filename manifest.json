@@ -1,0 +1,103 @@
+{
+  "name": "CryptoMarket Kribo",
+  "short_name": "CryptoKribo",
+  "description": "Platform cryptocurrency Indonesia dengan harga Bitcoin & altcoin real-time",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "scope": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "business", "crypto"],
+  "icons": [
+    {
+      "src": "/assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Bitcoin Price",
+      "short_name": "BTC",
+      "description": "Lihat harga Bitcoin terkini",
+      "url": "/bitcoin",
+      "icons": [{ "src": "/assets/icons/btc-shortcut.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Market Watch",
+      "short_name": "Market",
+      "description": "Pantau seluruh market crypto",
+      "url": "/market",
+      "icons": [{ "src": "/assets/icons/market-shortcut.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Top Gainers",
+      "short_name": "Gainers",
+      "description": "Lihat koin dengan kenaikan tertinggi",
+      "url": "/top-gainers",
+      "icons": [{ "src": "/assets/icons/gainers-shortcut.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshots/mobile-dark.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "CryptoMarket Kribo Mobile View"
+    },
+    {
+      "src": "/assets/screenshots/desktop-dark.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "CryptoMarket Kribo Desktop View"
+    }
+  ]
+}

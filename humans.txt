@@ -1,0 +1,19 @@
+/* TEAM */
+    Founder: Crypto Kribo Team
+    Site: https://cryptomarketkribo.com
+    Contact: hello@cryptomarketkribo.com
+    Location: Indonesia
+
+/* THANKS */
+    Binance API: https://binance.com
+    CoinMarketCap: https://coinmarketcap.com
+    Chart.js: https://chartjs.org
+    Font Awesome: https://fontawesome.com
+    Google Fonts: https://fonts.google.com
+
+/* SITE */
+    Last update: 2024/01/15
+    Language: Indonesian
+    Doctype: HTML5
+    IDE: VS Code
+    Standards: HTML5, CSS3, ES6+
