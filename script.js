@@ -1,3 +1,10 @@
+const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+const API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+
+async fetchFromAPI() {
+    const url = `${PROXY_URL}${API_URL}?start=1&limit=100&convert=${appState.currentCurrency}`;
+    // ...
+}
 // Konfigurasi
 const CONFIG = {
     apiKey: '94f89c989e394f1fbdea036702c7c5ae',
