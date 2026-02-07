@@ -1,3 +1,288 @@
+// Crypto Data Array
+const cryptoData = [
+    {
+        rank: 1,
+        id: 'bitcoin',
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        price_usd: 68607.18,
+        price_idr: 1156060484.09,
+        change_24h: 5.65,
+        change_usd: 3671.45,
+        volume_24h: 1486550000000000, // 1.48655T
+        market_cap: 1370000000000, // 1.37T
+        icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png'
+    },
+    {
+        rank: 2,
+        id: 'ethereum',
+        symbol: 'ETH',
+        name: 'Ethereum',
+        price_usd: 2039.17,
+        price_idr: 34360891.34,
+        change_24h: 10.64,
+        change_usd: 196.22,
+        volume_24h: 159370000000000, // 159.37T
+        market_cap: 245000000000000, // 245B
+        icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png'
+    },
+    {
+        rank: 3,
+        id: 'tether',
+        symbol: 'USDT',
+        name: 'TetherUS',
+        price_usd: 1.00,
+        price_idr: 16850.43,
+        change_24h: -0.07,
+        change_usd: -0.0007,
+        volume_24h: 450220000000000, // 450.22T
+        market_cap: 98000000000, // 98B
+        icon: 'https://cryptologos.cc/logos/tether-usdt-logo.png'
+    },
+    {
+        rank: 4,
+        id: 'binance-coin',
+        symbol: 'BNB',
+        name: 'BNB',
+        price_usd: 642.33,
+        price_idr: 10823536.70,
+        change_24h: 8.42,
+        change_usd: 49.88,
+        volume_24h: 134610000000000, // 134.61T
+        market_cap: 98700000000, // 98.7B
+        icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png'
+    },
+    {
+        rank: 5,
+        id: 'solana',
+        symbol: 'SOL',
+        name: 'Solana',
+        price_usd: 86.03,
+        price_idr: 1449642.49,
+        change_24h: 7.17,
+        change_usd: 5.75,
+        volume_24h: 881400000000000, // 881.40T
+        market_cap: 37600000000, // 37.6B
+        icon: 'https://cryptologos.cc/logos/solana-sol-logo.png'
+    }
+];
+
+// Format Number Functions
+function formatUSD(number) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(number);
+}
+
+function formatIDR(number) {
+    if (number >= 1000000000000) {
+        return `Rp ${(number / 1000000000000).toFixed(2)}T`;
+    } else if (number >= 1000000000) {
+        return `Rp ${(number / 1000000000).toFixed(2)}B`;
+    } else if (number >= 1000000) {
+        return `Rp ${(number / 1000000).toFixed(2)}M`;
+    }
+    return `Rp ${number.toLocaleString('id-ID')}`;
+}
+
+function formatChange(change) {
+    const sign = change >= 0 ? '+' : '';
+    return {
+        value: `${sign}${change.toFixed(2)}%`,
+        class: change >= 0 ? 'positive' : 'negative'
+    };
+}
+
+// Render Crypto Table
+class CryptoMarketTable {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.data = cryptoData;
+        this.init();
+    }
+
+    init() {
+        this.render();
+        this.setupEventListeners();
+    }
+
+    render() {
+        const tableHTML = `
+            <div class="crypto-market-container">
+                ${this.renderHeader()}
+                ${this.renderRows()}
+            </div>
+        `;
+        
+        this.container.innerHTML = tableHTML;
+    }
+
+    renderHeader() {
+        return `
+            <div class="table-header">
+                <div class="header-item name-col"># Nama</div>
+                <div class="header-item price-col">Harga</div>
+                <div class="header-item change-col">Perubahan</div>
+                <div class="header-item volume-col">Volume 24jam</div>
+                <div class="header-item marketcap-col">Kap Pasar</div>
+                <div class="header-item action-col">Tindakan</div>
+            </div>
+        `;
+    }
+
+    renderRows() {
+        return this.data.map(crypto => this.renderRow(crypto)).join('');
+    }
+
+    renderRow(crypto) {
+        const change = formatChange(crypto.change_24h);
+        
+        return `
+            <div class="crypto-row" data-id="${crypto.id}">
+                <div class="row-item name-col">
+                    <div class="crypto-info">
+                        <span class="crypto-rank">${crypto.rank}</span>
+                        <img src="${crypto.icon}" alt="${crypto.name}" class="crypto-icon" onerror="this.src='https://cryptologos.cc/logos/generic-crypto-logo.png'">
+                        <div class="crypto-details">
+                            <div class="crypto-name">${crypto.symbol} ${crypto.name}</div>
+                            <div class="crypto-symbol">${crypto.symbol}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row-item price-col">
+                    <div class="price-primary">${formatUSD(crypto.price_usd)}</div>
+                    <div class="price-secondary">${formatIDR(crypto.price_idr)}</div>
+                </div>
+                
+                <div class="row-item change-col">
+                    <div class="change-value ${change.class}">${change.value}</div>
+                    <div class="change-secondary">${crypto.change_usd >= 0 ? '+' : ''}${formatUSD(crypto.change_usd)}</div>
+                </div>
+                
+                <div class="row-item volume-col">
+                    <div class="volume-value">${formatIDR(crypto.volume_24h)}</div>
+                </div>
+                
+                <div class="row-item marketcap-col">
+                    <div class="marketcap-value">${formatIDR(crypto.market_cap)}</div>
+                </div>
+                
+                <div class="row-item action-col">
+                    <div class="action-buttons">
+                        <button class="btn-action btn-trade" data-symbol="${crypto.symbol}">
+                            <span>Trade</span>
+                        </button>
+                        <button class="btn-action btn-chart" data-symbol="${crypto.symbol}">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupEventListeners() {
+        // Delegate events to container
+        this.container.addEventListener('click', (e) => {
+            const tradeBtn = e.target.closest('.btn-trade');
+            const chartBtn = e.target.closest('.btn-chart');
+            const cryptoRow = e.target.closest('.crypto-row');
+            
+            if (tradeBtn) {
+                this.handleTradeClick(tradeBtn.dataset.symbol);
+            }
+            
+            if (chartBtn) {
+                this.handleChartClick(chartBtn.dataset.symbol);
+            }
+            
+            if (cryptoRow && !tradeBtn && !chartBtn) {
+                this.handleRowClick(cryptoRow.dataset.id);
+            }
+        });
+    }
+
+    handleTradeClick(symbol) {
+        console.log(`Trade ${symbol}`);
+        // Implement trade logic
+        alert(`Trading ${symbol} - Fitur akan segera hadir!`);
+    }
+
+    handleChartClick(symbol) {
+        console.log(`Show chart for ${symbol}`);
+        // Implement chart view
+        window.location.hash = `#chart/${symbol.toLowerCase()}`;
+    }
+
+    handleRowClick(cryptoId) {
+        console.log(`View details for ${cryptoId}`);
+        // Navigate to crypto detail page
+        window.location.href = `/crypto/${cryptoId}`;
+    }
+
+    // Update data dynamically
+    updateData(newData) {
+        this.data = newData;
+        this.render();
+    }
+
+    // Sort by column
+    sortBy(column, order = 'desc') {
+        const sortedData = [...this.data].sort((a, b) => {
+            let valueA, valueB;
+            
+            switch(column) {
+                case 'rank':
+                    valueA = a.rank;
+                    valueB = b.rank;
+                    break;
+                case 'price':
+                    valueA = a.price_usd;
+                    valueB = b.price_usd;
+                    break;
+                case 'change':
+                    valueA = a.change_24h;
+                    valueB = b.change_24h;
+                    break;
+                case 'volume':
+                    valueA = a.volume_24h;
+                    valueB = b.volume_24h;
+                    break;
+                case 'marketcap':
+                    valueA = a.market_cap;
+                    valueB = b.market_cap;
+                    break;
+                default:
+                    valueA = a.rank;
+                    valueB = b.rank;
+            }
+            
+            return order === 'desc' ? valueB - valueA : valueA - valueB;
+        });
+        
+        this.updateData(sortedData);
+    }
+
+    // Filter by search term
+    filterBySearch(term) {
+        const filtered = cryptoData.filter(crypto => 
+            crypto.name.toLowerCase().includes(term.toLowerCase()) ||
+            crypto.symbol.toLowerCase().includes(term.toLowerCase())
+        );
+        
+        this.updateData(filtered);
+    }
+}
+
+// Initialize table
+document.addEventListener('DOMContentLoaded', () => {
+    const cryptoTable = new CryptoMarketTable('cryptoMarketTable');
+    window.cryptoTable = cryptoTable;
+});
 // Konfigurasi untuk Binance API
 const CONFIG = {
     updateInterval: 10000, // 10 detik untuk real-time
