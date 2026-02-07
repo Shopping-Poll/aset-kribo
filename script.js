@@ -17,7 +17,17 @@ const CRYPTO_LIST = [
     { symbol: 'DOGE', name: 'Dogecoin', binanceSymbol: 'DOGEIDR', cmcId: 74 },
     { symbol: 'DOT', name: 'Polkadot', binanceSymbol: 'DOTIDR', cmcId: 6636 },
     { symbol: 'MATIC', name: 'Polygon', binanceSymbol: 'MATICIDR', cmcId: 3890 },
-    { symbol: 'AVAX', name: 'Avalanche', binanceSymbol: 'AVAXIDR', cmcId: 5805 }
+    { symbol: 'AVAX', name: 'Avalanche', binanceSymbol: 'AVAXIDR', cmcId: 5805 },
+    { symbol: 'LTC', name: 'Litecoin', binanceSymbol: 'LTCIDR', cmcId: 2 },
+    { symbol: 'LINK', name: 'Chainlink', binanceSymbol: 'LINKIDR', cmcId: 1975 },
+    { symbol: 'UNI', name: 'Uniswap', binanceSymbol: 'UNIIDR', cmcId: 7083 },
+    { symbol: 'SHIB', name: 'Shiba Inu', binanceSymbol: 'SHIBIDR', cmcId: 5994 },
+    { symbol: 'TRX', name: 'TRON', binanceSymbol: 'TRXIDR', cmcId: 1958 },
+    { symbol: 'ATOM', name: 'Cosmos', binanceSymbol: 'ATOMIDR', cmcId: 3794 },
+    { symbol: 'NEAR', name: 'NEAR Protocol', binanceSymbol: 'NEARIDR', cmcId: 6535 },
+    { symbol: 'ALGO', name: 'Algorand', binanceSymbol: 'ALGOIDR', cmcId: 4030 },
+    { symbol: 'VET', name: 'VeChain', binanceSymbol: 'VETIDR', cmcId: 3077 },
+    { symbol: 'AXS', name: 'Axie Infinity', binanceSymbol: 'AXSIDR', cmcId: 6783 }
 ];
 
 // State aplikasi
@@ -65,46 +75,19 @@ const elements = {
     }
 };
 
-// Demo Data sebagai fallback
-const DEMO_DATA = CRYPTO_LIST.map(crypto => ({
-    id: crypto.cmcId,
-    name: crypto.name,
-    symbol: crypto.symbol,
-    price: this.getRandomPrice(1000000, 1000000000),
-    change24h: (Math.random() * 20 - 10).toFixed(2),
-    marketCap: this.getRandomPrice(1000000000, 1000000000000),
-    volume24h: this.getRandomPrice(10000000, 100000000000),
-    supply: this.getRandomPrice(1000000, 1000000000),
-    sparkline: Array(7).fill().map(() => this.getRandomPrice(1000000, 1000000000))
-}));
-
 // Utility functions
-function getRandomPrice(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 function formatIDR(number) {
-    if (number >= 1000000000) {
-        return `Rp ${(number / 1000000000).toFixed(2)}B`;
-    } else if (number >= 1000000) {
-        return `Rp ${(number / 1000000).toFixed(2)}M`;
-    } else if (number >= 1000) {
-        return `Rp ${(number / 1000).toFixed(2)}K`;
-    }
-    return `Rp ${number.toLocaleString('id-ID')}`;
+    // Format lengkap tanpa singkatan B/M/K
+    return `Rp ${Math.round(number).toLocaleString('id-ID')}`;
 }
 
 function formatNumber(num) {
-    if (num >= 1000000000000) {
-        return `$${(num / 1000000000000).toFixed(2)}T`;
-    } else if (num >= 1000000000) {
-        return `$${(num / 1000000000).toFixed(2)}B`;
-    } else if (num >= 1000000) {
-        return `$${(num / 1000000).toFixed(2)}M`;
-    } else if (num >= 1000) {
-        return `$${(num / 1000).toFixed(2)}K`;
-    }
-    return `$${num.toLocaleString('id-ID')}`;
+    // Untuk USD, juga tanpa singkatan
+    return `$${Math.round(num).toLocaleString('id-ID')}`;
+}
+
+function getRandomPrice(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 // Binance API Class
@@ -151,7 +134,7 @@ class BinanceAPI {
     }
 
     // Get klines/candlestick data
-    async getKlines(symbol, interval = '1d', limit = 30) {
+    async getKlines(symbol, interval = '1h', limit = 24) {
         try {
             const response = await fetch(`${this.baseURL}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -307,6 +290,11 @@ class CryptoMarketApp {
                 this.showDetailsModal(cryptoId);
             }
         });
+
+        // Modal close
+        document.getElementById('closeModal')?.addEventListener('click', () => {
+            document.getElementById('tradingModal')?.classList.remove('active');
+        });
     }
 
     async loadAllData() {
@@ -315,10 +303,18 @@ class CryptoMarketApp {
             
             // Load data for all cryptocurrencies
             const promises = CRYPTO_LIST.map(crypto => this.loadCryptoData(crypto));
-            const results = await Promise.all(promises);
+            const results = await Promise.allSettled(promises);
             
-            // Filter out null results
-            appState.cryptoData = results.filter(r => r !== null);
+            // Filter out null results and get successful ones
+            appState.cryptoData = results
+                .filter(result => result.status === 'fulfilled' && result.value !== null)
+                .map(result => result.value);
+            
+            // If no data, use demo data
+            if (appState.cryptoData.length === 0) {
+                throw new Error('No data received from Binance');
+            }
+            
             appState.filteredData = [...appState.cryptoData];
             
             // Update BTC details
@@ -339,7 +335,7 @@ class CryptoMarketApp {
             // Update timestamp
             this.updateTimestamp();
             
-            console.log('Data loaded successfully!', appState.cryptoData);
+            console.log(`Data loaded successfully! ${appState.cryptoData.length} cryptocurrencies`);
             
         } catch (error) {
             console.error('Error loading data:', error);
@@ -352,13 +348,10 @@ class CryptoMarketApp {
         try {
             const tickerData = await this.binanceAPI.getTicker24hr(crypto.binanceSymbol);
             
-            if (!tickerData) {
-                console.warn(`No data for ${crypto.symbol}`);
+            if (!tickerData || tickerData.code) {
+                console.warn(`No data for ${crypto.symbol}:`, tickerData?.msg);
                 return null;
             }
-            
-            // Get price data
-            const priceData = await this.binanceAPI.getTickerPrice(crypto.binanceSymbol);
             
             // Get historical data for sparkline
             const klines = await this.binanceAPI.getKlines(crypto.binanceSymbol, '1h', 24);
@@ -403,7 +396,17 @@ class CryptoMarketApp {
             'DOGE': 141000000000,
             'DOT': 1200000000,
             'MATIC': 10000000000,
-            'AVAX': 400000000
+            'AVAX': 400000000,
+            'LTC': 73000000,
+            'LINK': 1000000000,
+            'UNI': 1000000000,
+            'SHIB': 589000000000000,
+            'TRX': 92000000000,
+            'ATOM': 300000000,
+            'NEAR': 1000000000,
+            'ALGO': 7000000000,
+            'VET': 72700000000,
+            'AXS': 270000000
         };
         return supplies[symbol] || 100000000;
     }
@@ -413,7 +416,7 @@ class CryptoMarketApp {
         
         elements.cryptoPriceElements.btcHigh.textContent = formatIDR(btcData.highPrice);
         elements.cryptoPriceElements.btcLow.textContent = formatIDR(btcData.lowPrice);
-        elements.cryptoPriceElements.btcVolume.textContent = `${(btcData.volume / 1000).toFixed(1)}K ${btcData.symbol}`;
+        elements.cryptoPriceElements.btcVolume.textContent = `${formatIDR(btcData.volume)} ${btcData.symbol}`;
         elements.cryptoPriceElements.btcMarketCap.textContent = formatIDR(btcData.marketCap);
         
         // Update chart data
@@ -421,7 +424,7 @@ class CryptoMarketApp {
     }
 
     updateChart(cryptoData) {
-        if (!this.chart) return;
+        if (!this.chart || !cryptoData.sparkline || cryptoData.sparkline.length === 0) return;
         
         // Update chart with new data
         const labels = cryptoData.sparkline.map((_, i) => `${i}h`);
@@ -436,9 +439,14 @@ class CryptoMarketApp {
         const totalMarketCap = appState.cryptoData.reduce((sum, crypto) => sum + crypto.marketCap, 0);
         const btcDominance = btc ? (btc.marketCap / totalMarketCap * 100).toFixed(1) : '52.8';
         
-        elements.globalStats.volume.textContent = `Rp ${(totalVolume / 1000000000).toFixed(1)}B`;
-        elements.globalStats.marketCap.textContent = `Rp ${(totalMarketCap / 1000000000000).toFixed(1)}T`;
+        // Format tanpa singkatan
+        elements.globalStats.volume.textContent = formatIDR(totalVolume);
+        elements.globalStats.marketCap.textContent = formatIDR(totalMarketCap);
         elements.globalStats.dominance.textContent = `${btcDominance}%`;
+        
+        // Update fear & greed index (random for demo)
+        const fgi = Math.floor(Math.random() * 40) + 60; // 60-100
+        elements.globalStats.fearGreed.textContent = fgi;
     }
 
     renderTable() {
@@ -469,7 +477,7 @@ class CryptoMarketApp {
             <td class="sticky-col">
                 <div class="crypto-name-cell">
                     <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                         alt="${crypto.name}" class="crypto-icon-small">
+                         alt="${crypto.name}" class="crypto-icon-small" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
                     <div>
                         <div>${crypto.name}</div>
                         <div class="crypto-symbol">${crypto.symbol}</div>
@@ -558,7 +566,7 @@ class CryptoMarketApp {
         item.innerHTML = `
             <div class="gainer-info">
                 <img src="https://s2.coinmarketcap.com/static/img/coins/32x32/${crypto.id}.png" 
-                     alt="${crypto.name}" width="24" height="24">
+                     alt="${crypto.name}" width="24" height="24" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
                 <div>
                     <div>${crypto.symbol}</div>
                     <div class="gainer-change ${changeClass}">
@@ -593,7 +601,7 @@ class CryptoMarketApp {
             <div class="featured-card-header">
                 <div class="featured-card-info">
                     <img src="https://s2.coinmarketcap.com/static/img/coins/64x64/${crypto.id}.png" 
-                         alt="${crypto.name}" width="40" height="40">
+                         alt="${crypto.name}" width="40" height="40" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
                     <div>
                         <div>${crypto.name}</div>
                         <div>${crypto.symbol}</div>
@@ -627,6 +635,12 @@ class CryptoMarketApp {
             const changeClass = btc.change24h >= 0 ? 'positive' : 'negative';
             elements.cryptoPriceElements.btcChange.className = `chart-change ${changeClass}`;
             elements.cryptoPriceElements.btcChangeWidget.className = `price-change-large ${changeClass}`;
+            
+            // Update time
+            elements.cryptoPriceElements.btcUpdateTime.textContent = new Date().toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
     }
 
@@ -644,20 +658,24 @@ class CryptoMarketApp {
     }
 
     startWebSocket() {
-        // Get symbols for WebSocket
-        const symbols = CRYPTO_LIST.map(c => c.binanceSymbol.toLowerCase());
-        
-        // Create WebSocket connection
-        const ws = this.binanceAPI.createWebSocket(symbols, (data) => {
-            this.handleWebSocketMessage(data);
-        });
-        
-        appState.wsConnections.main = ws;
+        try {
+            // Get symbols for WebSocket (limit to 5 for stability)
+            const symbols = CRYPTO_LIST.slice(0, 5).map(c => c.binanceSymbol.toLowerCase());
+            
+            // Create WebSocket connection
+            const ws = this.binanceAPI.createWebSocket(symbols, (data) => {
+                this.handleWebSocketMessage(data);
+            });
+            
+            appState.wsConnections.main = ws;
+        } catch (error) {
+            console.error('Error starting WebSocket:', error);
+        }
     }
 
     handleWebSocketMessage(data) {
         // Update specific cryptocurrency data
-        const symbol = data.s.toUpperCase(); // Symbol from Binance
+        const symbol = data.s.toUpperCase(); // Symbol from Binance (e.g., BTCIDR)
         const crypto = appState.cryptoData.find(c => c.binanceSymbol === symbol);
         
         if (crypto) {
@@ -796,9 +814,7 @@ class CryptoMarketApp {
                         ticks: {
                             color: 'rgba(255,255,255,0.7)',
                             callback: (value) => {
-                                if (value >= 1000000000) return `Rp ${(value/1000000000).toFixed(1)}B`;
-                                if (value >= 1000000) return `Rp ${(value/1000000).toFixed(1)}M`;
-                                return `Rp ${value}`;
+                                return `Rp ${Math.round(value).toLocaleString('id-ID')}`;
                             }
                         }
                     }
@@ -837,19 +853,44 @@ class CryptoMarketApp {
     startAutoUpdate() {
         // Update data periodically (fallback if WebSocket fails)
         setInterval(() => {
-            if (!CONFIG.useWebSocket) {
+            if (!CONFIG.useWebSocket || Object.keys(appState.wsConnections).length === 0) {
                 this.loadAllData();
             }
         }, CONFIG.updateInterval * 3); // Every 30 seconds
     }
 
     useDemoData() {
-        appState.cryptoData = DEMO_DATA;
-        appState.filteredData = [...DEMO_DATA];
+        // Generate demo data
+        appState.cryptoData = CRYPTO_LIST.map(crypto => {
+            const price = getRandomPrice(1000, 2000000000);
+            const change = (Math.random() * 20 - 10).toFixed(2);
+            const supply = this.getEstimatedSupply(crypto.symbol);
+            
+            return {
+                id: crypto.cmcId,
+                name: crypto.name,
+                symbol: crypto.symbol,
+                binanceSymbol: crypto.binanceSymbol,
+                price: price,
+                openPrice: price * (1 - parseFloat(change) / 100),
+                highPrice: price * (1 + Math.random() * 0.05),
+                lowPrice: price * (1 - Math.random() * 0.05),
+                change24h: parseFloat(change),
+                volume: getRandomPrice(10000000, 100000000000),
+                quoteVolume: getRandomPrice(10000000, 100000000000),
+                marketCap: price * supply,
+                supply: supply,
+                sparkline: Array(24).fill().map(() => price * (0.95 + Math.random() * 0.1)),
+                lastUpdate: new Date()
+            };
+        });
+        
+        appState.filteredData = [...appState.cryptoData];
         this.renderTable();
         this.renderTopGainers();
         this.renderFeatured();
         this.updatePrices();
+        this.updateGlobalStats();
     }
 
     showError(message) {
@@ -894,16 +935,80 @@ class CryptoMarketApp {
         const crypto = appState.cryptoData.find(c => c.symbol === symbol);
         if (!crypto) return;
         
-        alert(`Buy ${crypto.name} (${crypto.symbol}) at ${formatIDR(crypto.price)}`);
-        // Implement modal for buying
+        // Create modal
+        const modal = document.getElementById('tradingModal');
+        const modalBody = modal.querySelector('.modal-body');
+        
+        modalBody.innerHTML = `
+            <div class="buy-modal">
+                <h4>Buy ${crypto.name} (${crypto.symbol})</h4>
+                <div class="current-price">Current Price: ${formatIDR(crypto.price)}</div>
+                
+                <div class="buy-form">
+                    <div class="form-group">
+                        <label>Amount (${crypto.symbol})</label>
+                        <input type="number" id="buyAmount" step="0.000001" placeholder="0.000000">
+                    </div>
+                    <div class="form-group">
+                        <label>Total (IDR)</label>
+                        <input type="text" id="buyTotal" readonly value="Rp 0">
+                    </div>
+                    <button class="btn-buy-confirm">Confirm Buy</button>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        
+        // Add calculation
+        const amountInput = document.getElementById('buyAmount');
+        const totalInput = document.getElementById('buyTotal');
+        
+        amountInput.addEventListener('input', () => {
+            const amount = parseFloat(amountInput.value) || 0;
+            const total = amount * crypto.price;
+            totalInput.value = formatIDR(total);
+        });
     }
 
     showSellModal(symbol) {
         const crypto = appState.cryptoData.find(c => c.symbol === symbol);
         if (!crypto) return;
         
-        alert(`Sell ${crypto.name} (${crypto.symbol}) at ${formatIDR(crypto.price)}`);
-        // Implement modal for selling
+        // Create modal
+        const modal = document.getElementById('tradingModal');
+        const modalBody = modal.querySelector('.modal-body');
+        
+        modalBody.innerHTML = `
+            <div class="sell-modal">
+                <h4>Sell ${crypto.name} (${crypto.symbol})</h4>
+                <div class="current-price">Current Price: ${formatIDR(crypto.price)}</div>
+                
+                <div class="sell-form">
+                    <div class="form-group">
+                        <label>Amount (${crypto.symbol})</label>
+                        <input type="number" id="sellAmount" step="0.000001" placeholder="0.000000">
+                    </div>
+                    <div class="form-group">
+                        <label>Total (IDR)</label>
+                        <input type="text" id="sellTotal" readonly value="Rp 0">
+                    </div>
+                    <button class="btn-sell-confirm">Confirm Sell</button>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        
+        // Add calculation
+        const amountInput = document.getElementById('sellAmount');
+        const totalInput = document.getElementById('sellTotal');
+        
+        amountInput.addEventListener('input', () => {
+            const amount = parseFloat(amountInput.value) || 0;
+            const total = amount * crypto.price;
+            totalInput.value = formatIDR(total);
+        });
     }
 
     showDetailsModal(symbol) {
@@ -917,7 +1022,7 @@ class CryptoMarketApp {
             <div class="crypto-detail">
                 <div class="detail-header">
                     <img src="https://s2.coinmarketcap.com/static/img/coins/128x128/${crypto.id}.png" 
-                         alt="${crypto.name}" width="64" height="64">
+                         alt="${crypto.name}" width="64" height="64" onerror="this.src='https://cryptologos.cc/logos/${crypto.symbol.toLowerCase()}-${crypto.symbol.toLowerCase()}-logo.png?v=029'">
                     <div>
                         <h3>${crypto.name} (${crypto.symbol})</h3>
                         <div class="detail-price">${formatIDR(crypto.price)}</div>
@@ -943,20 +1048,19 @@ class CryptoMarketApp {
                         <span>Market Cap:</span>
                         <span>${formatIDR(crypto.marketCap)}</span>
                     </div>
+                    <div class="stat-row">
+                        <span>Circulating Supply:</span>
+                        <span>${crypto.supply.toLocaleString('id-ID')} ${crypto.symbol}</span>
+                    </div>
                 </div>
                 <div class="detail-actions">
-                    <button class="btn-action btn-buy" style="width: 100%; margin-bottom: 10px;">Buy ${crypto.symbol}</button>
-                    <button class="btn-action btn-sell" style="width: 100%;">Sell ${crypto.symbol}</button>
+                    <button class="btn-action btn-buy" style="width: 100%; margin-bottom: 10px;" data-id="${crypto.symbol}">Buy ${crypto.symbol}</button>
+                    <button class="btn-action btn-sell" style="width: 100%;" data-id="${crypto.symbol}">Sell ${crypto.symbol}</button>
                 </div>
             </div>
         `;
         
         modal.classList.add('active');
-        
-        // Close modal
-        document.getElementById('closeModal').onclick = () => {
-            modal.classList.remove('active');
-        };
     }
 }
 
@@ -976,3 +1080,10 @@ window.formatChange = (change) => {
         isPositive: change >= 0
     };
 };
+
+// Auto-refresh when page becomes visible
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && window.cryptoApp) {
+        window.cryptoApp.loadAllData();
+    }
+});
