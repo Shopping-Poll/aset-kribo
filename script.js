@@ -1087,3 +1087,129 @@ document.addEventListener('visibilitychange', () => {
         window.cryptoApp.loadAllData();
     }
 });
+// Tambahkan di script.js
+class PerformanceMonitor {
+    constructor() {
+        this.metrics = {};
+        this.init();
+    }
+
+    init() {
+        // Capture performance metrics
+        if ('performance' in window) {
+            this.capturePerformanceMetrics();
+        }
+        
+        // Monitor WebSocket performance
+        this.monitorWebSocket();
+        
+        // Monitor API response times
+        this.monitorAPI();
+    }
+
+    capturePerformanceMetrics() {
+        // First Contentful Paint
+        const fcpObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                if (entry.name === 'first-contentful-paint') {
+                    this.metrics.fcp = entry.startTime;
+                    console.log(`FCP: ${entry.startTime}ms`);
+                }
+            }
+        });
+        fcpObserver.observe({ entryTypes: ['paint'] });
+
+        // Largest Contentful Paint
+        const lcpObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                this.metrics.lcp = entry.startTime;
+                console.log(`LCP: ${entry.startTime}ms`);
+            }
+        });
+        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+
+        // First Input Delay
+        const fidObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                this.metrics.fid = entry.processingStart - entry.startTime;
+                console.log(`FID: ${this.metrics.fid}ms`);
+            }
+        });
+        fidObserver.observe({ entryTypes: ['first-input'] });
+
+        // Cumulative Layout Shift
+        let clsValue = 0;
+        const clsObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                if (!entry.hadRecentInput) {
+                    clsValue += entry.value;
+                    this.metrics.cls = clsValue;
+                    console.log(`CLS: ${clsValue}`);
+                }
+            }
+        });
+        clsObserver.observe({ entryTypes: ['layout-shift'] });
+    }
+
+    monitorWebSocket() {
+        const originalWebSocket = window.WebSocket;
+        window.WebSocket = function(...args) {
+            const ws = new originalWebSocket(...args);
+            const startTime = Date.now();
+            
+            ws.addEventListener('open', () => {
+                const connectTime = Date.now() - startTime;
+                this.metrics.wsConnectTime = connectTime;
+                console.log(`WebSocket connected in ${connectTime}ms`);
+            });
+            
+            ws.addEventListener('error', (error) => {
+                console.error('WebSocket error:', error);
+                this.reportError('WebSocket', error);
+            });
+            
+            return ws;
+        };
+    }
+
+    monitorAPI() {
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const startTime = Date.now();
+            
+            try {
+                const response = await originalFetch(...args);
+                const responseTime = Date.now() - startTime;
+                
+                console.log(`API ${args[0]} responded in ${responseTime}ms`);
+                
+                // Track slow responses
+                if (responseTime > 1000) {
+                    console.warn(`Slow API response: ${args[0]} (${responseTime}ms)`);
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('API fetch error:', error);
+                throw error;
+            }
+        };
+    }
+
+    reportError(type, error) {
+        // Send to analytics
+        if (window.gtag) {
+            gtag('event', 'exception', {
+                description: `${type}: ${error.message}`,
+                fatal: false
+            });
+        }
+    }
+
+    getMetrics() {
+        return this.metrics;
+    }
+}
+
+// Initialize performance monitoring
+window.performanceMonitor = new PerformanceMonitor();
