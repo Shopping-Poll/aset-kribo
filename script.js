@@ -1,8 +1,8 @@
 // Konfigurasi
 const CONFIG = {
-    apiKey: 'YOUR_COINMARKETCAP_API_KEY',
+    apiKey: '94f89c989e394f1fbdea036702c7c5ae',
     updateInterval: 30000, // 30 detik
-    demoMode: true, // Set false untuk API real
+    demoMode: false, // Set false untuk API real
     defaultCurrency: 'IDR'
 };
 
