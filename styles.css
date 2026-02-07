@@ -1,4 +1,49 @@
-/* Reset & Base Styles */
+.error-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ff4757, #ff6b6b);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    box-shadow: 0 10px 25px rgba(255, 71, 87, 0.3);
+    border-left: 5px solid #ff3838;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.error-notification i {
+    font-size: 20px;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0 5px;
+}
+
+.error-close:hover {
+    opacity: 0.8;
+}
 * {
     margin: 0;
     padding: 0;
